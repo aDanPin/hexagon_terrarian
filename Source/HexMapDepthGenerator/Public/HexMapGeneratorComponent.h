@@ -15,40 +15,40 @@ class HEXMAPDEPTHGENERATOR_API UHexMapGeneratorComponent : public UActorComponen
 public:
 	UHexMapGeneratorComponent();
 
-	UPROPERTY(EditAnywhere, Category="Field")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	float HexRadius = 1.7f;
 
-	UPROPERTY(EditAnywhere, Category="Field")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	int32 MapWidth = 11;
 
-	UPROPERTY(EditAnywhere, Category="Field")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	int32 MapHeight = 11;
 
-	UPROPERTY(EditAnywhere, Category="Field")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	TSubclassOf<AActor> DefaultHexAsset;
 
-	UPROPERTY(EditAnywhere, Category="Depth")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	int32 DepthLevelsCount = 5;
 
-	UPROPERTY(EditAnywhere, Category="Depth")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	int32 GlobalSeed = 12345;
 
-	UPROPERTY(EditAnywhere, Category="Depth")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	TArray<FDepthLevelConfig> NoiseLevels;
 
-	UPROPERTY(EditAnywhere, Category="Depth")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	TArray<TSubclassOf<AActor>> DepthLevelPrefabs;
 
-	UPROPERTY(EditAnywhere, Category="Brush")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	TSubclassOf<AActor> BrushHexAsset;
 
-	UPROPERTY(EditAnywhere, Category="Brush")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	int32 BrushRadius = 5;
 
-	UFUNCTION(CallInEditor, Category="Hex Map")
+	UFUNCTION(CallInEditor, Category="Hex Map Generator")
 	void Regenerate();
 
-	UFUNCTION(BlueprintCallable, Category="Hex Map")
+	UFUNCTION(BlueprintCallable, Category="Hex Map Generator")
 	void PaintHex(int32 Alpha, int32 Beta);
 
 private:

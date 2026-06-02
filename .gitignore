@@ -1,0 +1,31 @@
+# Unreal Engine
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+
+# Visual Studio / Rider
+.vs/
+*.sln
+*.suo
+*.user
+*.userosscache
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Compiled
+*.dll
+*.exe
+*.pdb
+*.obj
+*.lib
+*.pch

@@ -101,8 +101,8 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 			case EApplyMode::Replace:
 				Map[i][j] = OperatorValue;
 				break;
-			case EApplyMode::Interpolate:
-				Map[i][j] = FMath::Lerp(0.0f, OperatorValue, Map[i][j]);
+			case EApplyMode::Lerp:
+				Map[i][j] = FMath::Lerp(Map[i][j], OperatorValue, Level.Power);
 				break;
 			case EApplyMode::Multiply:
 				Map[i][j] *= OperatorValue;
@@ -148,8 +148,13 @@ void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
 				int32 PosX = FMath::RoundToInt(Point.X * Width);
 				int32 PosY = FMath::RoundToInt(Point.Y * Height);
 				float Distance = FHexMapTransforms::Distance(i, j, PosX, PosY, 1.0f);
-				float V = 1.0f / (Distance * Distance / Point.Radius + 1.0f);
+				
+				if (Distance < Point.Radius) {
+					Value = 1.0f;
+					break;
+				}
 
+				float V = 1.0f / ((Distance - Point.Radius) * (Distance - Point.Radius) + 1.0f);
 				if (V >= 0.0f && V <= 1.0f && V >= Value)
 					Value = V;
 			}

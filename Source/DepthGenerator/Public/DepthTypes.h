@@ -9,7 +9,7 @@ enum class EApplyMode : uint8
 	Add,
 	Subtract,
 	Multiply,
-	Interpolate,
+	Lerp,
 	Replace
 };
 

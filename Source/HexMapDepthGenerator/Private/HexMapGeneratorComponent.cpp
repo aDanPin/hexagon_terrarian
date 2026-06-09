@@ -1,6 +1,5 @@
 #include "HexMapGeneratorComponent.h"
 #include "DepthMapGenerator.h"
-#include "HexChipComponent.h"
 #include "HexFieldMetadata.h"
 #include "GameFramework/Actor.h"
 
@@ -24,10 +23,10 @@ void UHexMapGeneratorComponent::ApplySeeds()
 }
 
 // ai generated
-bool UHexMapGeneratorComponent::HasAnyDepthPrefab() const
+bool UHexMapGeneratorComponent::HasAnyMesh() const
 {
-	for (const TSubclassOf<AActor>& Prefab : DepthLevelPrefabs)
-		if (*Prefab) return true;
+	for (const TObjectPtr<UStaticMesh>& Mesh : DepthLevelMeshes)
+		if (Mesh) return true;
 	return false;
 }
 
@@ -46,55 +45,21 @@ TArray<TArray<int32>> UHexMapGeneratorComponent::BuildDepthMap()
 void UHexMapGeneratorComponent::Regenerate()
 {
 	AActor* Anchor = GetOwner();
-	if (!Anchor) return;
+	if (!Anchor || !HasAnyMesh()) return;
 
 	ApplySeeds();
-
-	TSubclassOf<AActor> Fallback = DefaultHexAsset;
-	if (!*Fallback && DepthLevelPrefabs.Num() > 0)
-		Fallback = DepthLevelPrefabs[0];
-	if (!*Fallback && !HasAnyDepthPrefab()) return;
 
 	FHexFieldMetadata Meta;
 	Meta.MapWidth = MapWidth;
 	Meta.MapHeight = MapHeight;
 	Meta.HexRadius = HexRadius;
-	Meta.RenderHexRadius = HexRadius;
-	Meta.HexAsset = Fallback;
 
 	Manager.Initialize(GetWorld());
 	Manager.SetMetadata(Meta);
-	Manager.ClearMapStorage();
 
-	TArray<AActor*> Attached;
-	Anchor->GetAttachedActors(Attached);
-	for (AActor* Child : Attached)
-		if (Child) Child->Destroy();
+	TArray<UStaticMesh*> Meshes;
+	for (const TObjectPtr<UStaticMesh>& Mesh : DepthLevelMeshes)
+		Meshes.Add(Mesh);
 
-	Manager.InitMap(Anchor, BuildDepthMap(), DepthLevelPrefabs);
-}
-
-// ai generated
-void UHexMapGeneratorComponent::PaintHex(int32 Alpha, int32 Beta)
-{
-	if (!*BrushHexAsset) return;
-
-	AActor* Hex = nullptr;
-	if (!Manager.TryGetHex(Alpha, Beta, Hex) || !Hex) return;
-	UHexChipComponent* Chip = Hex->FindComponentByClass<UHexChipComponent>();
-	if (!Chip) return;
-
-	int32 Radius = FMath::Max(1, BrushRadius);
-	if (Radius <= 1)
-	{
-		Manager.ReplaceHexPrefab(Chip, BrushHexAsset);
-		return;
-	}
-
-	for (AActor* H : Manager.GetHexesInRadius(Chip, Radius))
-	{
-		if (!H) continue;
-		UHexChipComponent* C = H->FindComponentByClass<UHexChipComponent>();
-		if (C) Manager.ReplaceHexPrefab(C, BrushHexAsset);
-	}
+	Manager.InitMap(Anchor, BuildDepthMap(), Meshes);
 }

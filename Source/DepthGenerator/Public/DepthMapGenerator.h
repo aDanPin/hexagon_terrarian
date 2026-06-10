@@ -9,7 +9,7 @@ public:
 	int32 Width = 64;
 	int32 Height = 64;
 	int32 LevelsCount = 5;
-	TArray<FDepthLevelConfig> NoiseLevels;
+	TArray<FDepthLevelConfig> GenerationLevels;
 
 	TArray<TArray<int32>> GetQuantizeMap();
 	static int32 QuantizeDepth(float Value, int32 InLevelsCount);

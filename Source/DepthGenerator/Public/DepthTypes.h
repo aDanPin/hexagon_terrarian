@@ -50,7 +50,7 @@ struct DEPTHGENERATOR_API FDepthLevelConfig
 	UPROPERTY(EditAnywhere)
 	bool bEnabled = true;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	int32 Seed = 12345;
 
 	UPROPERTY(EditAnywhere)

@@ -27,6 +27,9 @@ void FHexMapManager::InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthM
 {
 	if (!World || !Anchor || DepthMeshes.Num() == 0) return;
 
+#if WITH_EDITOR
+	Anchor->Modify();
+#endif
 	ClearHISM(Anchor);
 
 	TArray<UHierarchicalInstancedStaticMeshComponent*> Components;
@@ -37,11 +40,15 @@ void FHexMapManager::InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthM
 	for (int32 i = 0; i < DepthMeshes.Num(); i++)
 	{
 		if (!DepthMeshes[i]) continue;
-		UHierarchicalInstancedStaticMeshComponent* HISM = NewObject<UHierarchicalInstancedStaticMeshComponent>(Anchor);
+		UHierarchicalInstancedStaticMeshComponent* HISM = NewObject<UHierarchicalInstancedStaticMeshComponent>(
+			Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
 		HISM->SetStaticMesh(DepthMeshes[i]);
 		HISM->SetupAttachment(Anchor->GetRootComponent());
 		HISM->RegisterComponent();
 		Anchor->AddInstanceComponent(HISM);
+#if WITH_EDITOR
+		HISM->Modify();
+#endif
 		Components[i] = HISM;
 	}
 
@@ -56,11 +63,20 @@ void FHexMapManager::InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthM
 				FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, Metadata.HexRadius),
 				FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, Metadata.HexRadius),
 				0.0f);
-			Batches[Idx].Add(FTransform(Location));
+			Batches[Idx].Add(FTransform(FRotator(0.0f, Metadata.HexRotation, 0.0f), Location));
 		}
 	}
 
 	for (int32 i = 0; i < Components.Num(); i++)
-		if (Components[i] && Batches[i].Num() > 0)
-			Components[i]->AddInstances(Batches[i], false, true);
+	{
+		if (!Components[i] || Batches[i].Num() == 0) continue;
+		Components[i]->AddInstances(Batches[i], false, true);
+#if WITH_EDITOR
+		Components[i]->MarkRenderStateDirty();
+#endif
+	}
+
+#if WITH_EDITOR
+	Anchor->MarkPackageDirty();
+#endif
 }

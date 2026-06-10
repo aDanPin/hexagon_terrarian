@@ -16,4 +16,7 @@ struct FHexFieldMetadata
 
 	UPROPERTY(EditAnywhere)
 	float HexRadius = 1.7f;
+
+	UPROPERTY(EditAnywhere)
+	float HexRotation = 0.0f;
 };

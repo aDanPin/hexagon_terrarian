@@ -11,15 +11,15 @@ namespace
 // ai generated
 TArray<TArray<int32>> FDepthMapGenerator::GetQuantizeMap()
 {
-	if (NoiseLevels.Num() == 0)
-		NoiseLevels.Add(FDepthLevelConfig());
+	if (GenerationLevels.Num() == 0)
+		GenerationLevels.Add(FDepthLevelConfig());
 
 	Map.SetNum(Height);
 	for (int32 j = 0; j < Height; j++)
 		Map[j].Init(0.0f, Width);
 
-	for (int32 i = 0; i < NoiseLevels.Num(); i++)
-		if (NoiseLevels[i].bEnabled) ApplyNoiseLevel(i);
+	for (int32 i = 0; i < GenerationLevels.Num(); i++)
+		if (GenerationLevels[i].bEnabled) ApplyNoiseLevel(i);
 
 	int32 Levels = FMath::Max(1, LevelsCount);
 	TArray<TArray<int32>> Quantized;
@@ -55,7 +55,7 @@ void FDepthMapGenerator::ShiftsFromSeed(int32 Seed, float& OutX, float& OutY)
 // ai generated
 void FDepthMapGenerator::ApplyNoiseLevel(int32 Index)
 {
-	const FDepthLevelConfig& Level = NoiseLevels[Index];
+	const FDepthLevelConfig& Level = GenerationLevels[Index];
 
 	switch (Level.Type)
 	{

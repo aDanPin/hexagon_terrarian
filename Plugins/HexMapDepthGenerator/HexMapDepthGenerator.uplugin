@@ -1,0 +1,33 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "Hex Map Depth Generator",
+  "Description": "Procedural hexagonal map generator. Add a component to any actor, set depth-level meshes and noise layers, and generate seeded hex maps directly in the editor.",
+  "Category": "Geometry",
+  "CreatedBy": "DaniElRuso",
+  "CreatedByURL": "",
+  "DocsURL": "",
+  "MarketplaceURL": "",
+  "SupportURL": "",
+  "EngineVersion": "5.7.0",
+  "CanContainContent": false,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "HexMap",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "DepthGenerator",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "HexMapDepthGenerator",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

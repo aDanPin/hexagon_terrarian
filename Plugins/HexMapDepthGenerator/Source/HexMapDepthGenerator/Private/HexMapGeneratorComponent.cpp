@@ -11,14 +11,14 @@ UHexMapGeneratorComponent::UHexMapGeneratorComponent()
 
 void UHexMapGeneratorComponent::ApplySeeds()
 {
-	FRandomStream Rng(GlobalSeed);
-	for (int32 i = 0; i < GenerationLevels.Num(); i++)
-		GenerationLevels[i].Seed = static_cast<int32>(Rng.GetUnsignedInt());
+	FRandomStream Rng(Settings.GlobalSeed);
+	for (int32 i = 0; i < Settings.GenerationLevels.Num(); i++)
+		Settings.GenerationLevels[i].Seed = static_cast<int32>(Rng.GetUnsignedInt());
 }
 
 bool UHexMapGeneratorComponent::HasAnyMesh() const
 {
-	for (const TObjectPtr<UStaticMesh>& Mesh : DepthLevelMeshes)
+	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
 		if (Mesh) return true;
 	return false;
 }
@@ -27,10 +27,10 @@ bool UHexMapGeneratorComponent::HasAnyMesh() const
 TArray<TArray<int32>> UHexMapGeneratorComponent::BuildDepthMap()
 {
 	FDepthMapGenerator Generator;
-	Generator.Width = MapWidth;
-	Generator.Height = MapHeight;
-	Generator.LevelsCount = DepthLevelMeshes.Num();
-	Generator.GenerationLevels = GenerationLevels;
+	Generator.Width = Settings.MapWidth;
+	Generator.Height = Settings.MapHeight;
+	Generator.LevelsCount = Settings.DepthLevelMeshes.Num();
+	Generator.GenerationLevels = Settings.GenerationLevels;
 	return Generator.GetQuantizeMap();
 }
 
@@ -49,16 +49,16 @@ void UHexMapGeneratorComponent::Regenerate()
 #endif
 
 	FHexFieldMetadata Meta;
-	Meta.MapWidth = MapWidth;
-	Meta.MapHeight = MapHeight;
-	Meta.HexRadius = HexRadius;
-	Meta.HexRotation = HexRotation;
+	Meta.MapWidth = Settings.MapWidth;
+	Meta.MapHeight = Settings.MapHeight;
+	Meta.HexRadius = Settings.HexRadius;
+	Meta.HexRotation = Settings.HexRotation;
 
 	Manager.Initialize(GetWorld());
 	Manager.SetMetadata(Meta);
 
 	TArray<UStaticMesh*> Meshes;
-	for (const TObjectPtr<UStaticMesh>& Mesh : DepthLevelMeshes)
+	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
 		Meshes.Add(Mesh);
 
 	Manager.InitMap(Anchor, BuildDepthMap(), Meshes);

@@ -22,21 +22,13 @@ void UHexMapGeneratorComponent::Regenerate()
 	AActor* Anchor = GetOwner();
 	if (!Anchor || !HasAnyMesh()) return;
 
-#if WITH_EDITOR
-	bSuppressPropertyRegen = true;
-#endif
-	Manager.ApplySeeds(Settings.GlobalSeed, Settings.GenerationLevels);
-#if WITH_EDITOR
-	bSuppressPropertyRegen = false;
-#endif
-
-	Manager.SetMetadata(FieldMetadata);
-
 	TArray<UStaticMesh*> Meshes;
 	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
 		Meshes.Add(Mesh);
 
-	InitMap(Anchor, Manager.BuildDepthMap(Settings.DepthLevelMeshes.Num(), Settings.GenerationLevels), Meshes);
+	Manager.SetMetadata(FieldMetadata);
+	Manager.SetSettings(Settings.GlobalSeed, Settings.GenerationLevels);
+	InitMap(Anchor, Manager.BuildDepthMap(Settings.DepthLevelMeshes.Num()), Meshes);
 }
 
 // ai generated
@@ -65,6 +57,7 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 #if WITH_EDITOR
 	Anchor->Modify();
 #endif
+
 	ClearHISM(Anchor);
 
 	TArray<UHierarchicalInstancedStaticMeshComponent*> Components;

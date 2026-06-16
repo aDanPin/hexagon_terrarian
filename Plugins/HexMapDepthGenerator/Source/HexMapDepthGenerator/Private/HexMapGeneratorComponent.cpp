@@ -57,11 +57,41 @@ void UHexMapGeneratorComponent::Regenerate()
 	Manager.InitMap(Anchor, BuildDepthMap(), Meshes);
 }
 
+// ai generated
+void UHexMapGeneratorComponent::SavePreset()
+{
+	if (!Preset) return;
+#if WITH_EDITOR
+	Preset->Modify();
+#endif
+	Preset->FieldMetadata = FieldMetadata;
+	Preset->Settings = Settings;
+#if WITH_EDITOR
+	Preset->MarkPackageDirty();
+#endif
+}
+
+// ai generated
+void UHexMapGeneratorComponent::LoadPreset()
+{
+	if (!Preset) return;
+#if WITH_EDITOR
+	bSuppressPropertyRegen = true;
+#endif
+	FieldMetadata = Preset->FieldMetadata;
+	Settings = Preset->Settings;
+#if WITH_EDITOR
+	bSuppressPropertyRegen = false;
+	Regenerate();
+#endif
+}
+
 #if WITH_EDITOR
 // ai generated
 void UHexMapGeneratorComponent::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeChainProperty(PropertyChangedEvent);
+	if (bSuppressPropertyRegen) return;
 	Regenerate();
 }
 #endif

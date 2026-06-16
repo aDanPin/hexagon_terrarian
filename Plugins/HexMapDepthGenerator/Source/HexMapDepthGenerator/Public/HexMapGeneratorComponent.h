@@ -6,6 +6,7 @@
 #include "HexFieldMetadata.h"
 #include "HexMapGeneratorSettings.h"
 #include "HexMapManager.h"
+#include "HexMapGeneratorPreset.h"
 #include "HexMapGeneratorComponent.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -22,8 +23,17 @@ public:
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	FHexMapGeneratorSettings Settings;
 
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	TObjectPtr<UHexMapGeneratorPreset> Preset;
+
 	UFUNCTION(CallInEditor, Category="Hex Map Generator")
 	void Regenerate();
+
+	UFUNCTION(CallInEditor, Category="Hex Map Generator")
+	void SavePreset();
+
+	UFUNCTION(CallInEditor, Category="Hex Map Generator")
+	void LoadPreset();
 
 #if WITH_EDITOR
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;

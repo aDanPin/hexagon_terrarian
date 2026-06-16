@@ -88,8 +88,8 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 			int32 Idx = PickMeshIndex(DepthMap, DepthMeshes.Num(), Beta, Alpha);
 			if (!Components.IsValidIndex(Idx) || !Components[Idx]) continue;
 			FVector Location = Origin + FVector(
-				FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
 				FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, FieldMetadata.HexRadius),
+				-FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
 				0.0f);
 			Batches[Idx].Add(FTransform(FRotator(0.0f, FieldMetadata.HexRotation, 0.0f), Location));
 		}

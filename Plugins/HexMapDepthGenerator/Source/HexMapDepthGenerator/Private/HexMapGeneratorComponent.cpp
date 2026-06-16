@@ -1,6 +1,5 @@
 #include "HexMapGeneratorComponent.h"
 #include "DepthMapGenerator.h"
-#include "HexFieldMetadata.h"
 #include "GameFramework/Actor.h"
 #include "Math/RandomStream.h"
 
@@ -27,8 +26,8 @@ bool UHexMapGeneratorComponent::HasAnyMesh() const
 TArray<TArray<int32>> UHexMapGeneratorComponent::BuildDepthMap()
 {
 	FDepthMapGenerator Generator;
-	Generator.Width = Settings.MapWidth;
-	Generator.Height = Settings.MapHeight;
+	Generator.Width = FieldMetadata.MapWidth;
+	Generator.Height = FieldMetadata.MapHeight;
 	Generator.LevelsCount = Settings.DepthLevelMeshes.Num();
 	Generator.GenerationLevels = Settings.GenerationLevels;
 	return Generator.GetQuantizeMap();
@@ -48,14 +47,8 @@ void UHexMapGeneratorComponent::Regenerate()
 	bSuppressPropertyRegen = false;
 #endif
 
-	FHexFieldMetadata Meta;
-	Meta.MapWidth = Settings.MapWidth;
-	Meta.MapHeight = Settings.MapHeight;
-	Meta.HexRadius = Settings.HexRadius;
-	Meta.HexRotation = Settings.HexRotation;
-
 	Manager.Initialize(GetWorld());
-	Manager.SetMetadata(Meta);
+	Manager.SetMetadata(FieldMetadata);
 
 	TArray<UStaticMesh*> Meshes;
 	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)

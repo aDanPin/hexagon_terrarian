@@ -9,10 +9,10 @@ struct FHexFieldMetadata
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	int32 MapWidth = 64;
+	int32 MapWidth = 11;
 
 	UPROPERTY(EditAnywhere)
-	int32 MapHeight = 64;
+	int32 MapHeight = 11;
 
 	UPROPERTY(EditAnywhere)
 	float HexRadius = 1.7f;

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Templates/SubclassOf.h"
+#include "HexFieldMetadata.h"
 #include "HexMapGeneratorSettings.h"
 #include "HexMapManager.h"
 #include "HexMapGeneratorComponent.generated.h"
@@ -14,6 +15,9 @@ class HEXMAPDEPTHGENERATOR_API UHexMapGeneratorComponent : public UActorComponen
 
 public:
 	UHexMapGeneratorComponent();
+
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	FHexFieldMetadata FieldMetadata;
 
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	FHexMapGeneratorSettings Settings;

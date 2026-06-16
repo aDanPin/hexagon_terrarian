@@ -1,33 +1,12 @@
 {
   "FileVersion": 3,
   "EngineAssociation": "5.7",
-  "Category": "",
-  "Description": "",
-  "Modules": [
-    {
-      "Name": "HexMapDepthGenerator",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    },
-    {
-      "Name": "DepthGenerator",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    },
-    {
-      "Name": "HexMap",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    }
-  ],
+  "Category": "Geometry",
+  "Description": "Demo project for the Hex Map Depth Generator plugin: an example map showing procedural hex map generation.",
   "Plugins": [
     {
-      "Name": "ModelingToolsEditorMode",
+      "Name": "HexMapDepthGenerator",
       "Enabled": true
     }
-  ],
-  "TargetPlatforms": [],
-  "AdditionalRootDirectories": [],
-  "AdditionalPluginDirectories": [],
-  "EpicSampleNameHash": ""
+  ]
 }

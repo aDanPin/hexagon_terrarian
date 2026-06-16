@@ -44,4 +44,7 @@ private:
 	FHexMapManager Manager;
 
 	bool HasAnyMesh() const;
+	void InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthMap, const TArray<UStaticMesh*>& DepthMeshes);
+	void ClearHISM(AActor* Anchor) const;
+	static int32 PickMeshIndex(const TArray<TArray<int32>>& DepthMap, int32 MeshCount, int32 Beta, int32 Alpha);
 };

@@ -1,5 +1,8 @@
 #include "HexMapGeneratorComponent.h"
+#include "HexMapTransforms.h"
 #include "GameFramework/Actor.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 
 UHexMapGeneratorComponent::UHexMapGeneratorComponent()
 {
@@ -22,19 +25,95 @@ void UHexMapGeneratorComponent::Regenerate()
 #if WITH_EDITOR
 	bSuppressPropertyRegen = true;
 #endif
-	FHexMapManager::ApplySeeds(Settings.GlobalSeed, Settings.GenerationLevels);
+	Manager.ApplySeeds(Settings.GlobalSeed, Settings.GenerationLevels);
 #if WITH_EDITOR
 	bSuppressPropertyRegen = false;
 #endif
 
-	Manager.Initialize(GetWorld());
 	Manager.SetMetadata(FieldMetadata);
 
 	TArray<UStaticMesh*> Meshes;
 	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
 		Meshes.Add(Mesh);
 
-	Manager.InitMap(Anchor, Manager.BuildDepthMap(Settings.DepthLevelMeshes.Num(), Settings.GenerationLevels), Meshes);
+	InitMap(Anchor, Manager.BuildDepthMap(Settings.DepthLevelMeshes.Num(), Settings.GenerationLevels), Meshes);
+}
+
+// ai generated
+void UHexMapGeneratorComponent::ClearHISM(AActor* Anchor) const
+{
+	TArray<UHierarchicalInstancedStaticMeshComponent*> Existing;
+	Anchor->GetComponents(Existing);
+	for (UHierarchicalInstancedStaticMeshComponent* Comp : Existing)
+		if (Comp) Comp->DestroyComponent();
+}
+
+// ai generated
+int32 UHexMapGeneratorComponent::PickMeshIndex(const TArray<TArray<int32>>& DepthMap, int32 MeshCount, int32 Beta, int32 Alpha)
+{
+	if (DepthMap.Num() == 0 || Beta < 0 || Beta >= DepthMap.Num()) return 0;
+	if (Alpha < 0 || Alpha >= DepthMap[Beta].Num()) return 0;
+	int32 Level = DepthMap[Beta][Alpha];
+	return FMath::Clamp(Level, 1, MeshCount) - 1;
+}
+
+// ai generated
+void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthMap, const TArray<UStaticMesh*>& DepthMeshes)
+{
+	if (!GetWorld() || !Anchor || DepthMeshes.Num() == 0) return;
+
+#if WITH_EDITOR
+	Anchor->Modify();
+#endif
+	ClearHISM(Anchor);
+
+	TArray<UHierarchicalInstancedStaticMeshComponent*> Components;
+	TArray<TArray<FTransform>> Batches;
+	Components.SetNum(DepthMeshes.Num());
+	Batches.SetNum(DepthMeshes.Num());
+
+	for (int32 i = 0; i < DepthMeshes.Num(); i++)
+	{
+		if (!DepthMeshes[i]) continue;
+		UHierarchicalInstancedStaticMeshComponent* HISM = NewObject<UHierarchicalInstancedStaticMeshComponent>(
+			Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
+		HISM->SetStaticMesh(DepthMeshes[i]);
+		HISM->SetupAttachment(Anchor->GetRootComponent());
+		HISM->RegisterComponent();
+		Anchor->AddInstanceComponent(HISM);
+#if WITH_EDITOR
+		HISM->Modify();
+#endif
+		Components[i] = HISM;
+	}
+
+	FVector Origin = Anchor->GetActorLocation();
+	for (int32 Beta = 0; Beta < FieldMetadata.MapHeight; Beta++)
+	{
+		for (int32 Alpha = 0; Alpha < FieldMetadata.MapWidth; Alpha++)
+		{
+			int32 Idx = PickMeshIndex(DepthMap, DepthMeshes.Num(), Beta, Alpha);
+			if (!Components.IsValidIndex(Idx) || !Components[Idx]) continue;
+			FVector Location = Origin + FVector(
+				FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
+				FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, FieldMetadata.HexRadius),
+				0.0f);
+			Batches[Idx].Add(FTransform(FRotator(0.0f, FieldMetadata.HexRotation, 0.0f), Location));
+		}
+	}
+
+	for (int32 i = 0; i < Components.Num(); i++)
+	{
+		if (!Components[i] || Batches[i].Num() == 0) continue;
+		Components[i]->AddInstances(Batches[i], false, true);
+#if WITH_EDITOR
+		Components[i]->MarkRenderStateDirty();
+#endif
+	}
+
+#if WITH_EDITOR
+	Anchor->MarkPackageDirty();
+#endif
 }
 
 // ai generated

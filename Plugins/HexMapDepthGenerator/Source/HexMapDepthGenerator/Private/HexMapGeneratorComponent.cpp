@@ -1,18 +1,9 @@
 #include "HexMapGeneratorComponent.h"
-#include "DepthMapGenerator.h"
 #include "GameFramework/Actor.h"
-#include "Math/RandomStream.h"
 
 UHexMapGeneratorComponent::UHexMapGeneratorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-}
-
-void UHexMapGeneratorComponent::ApplySeeds()
-{
-	FRandomStream Rng(Settings.GlobalSeed);
-	for (int32 i = 0; i < Settings.GenerationLevels.Num(); i++)
-		Settings.GenerationLevels[i].Seed = static_cast<int32>(Rng.GetUnsignedInt());
 }
 
 bool UHexMapGeneratorComponent::HasAnyMesh() const
@@ -20,17 +11,6 @@ bool UHexMapGeneratorComponent::HasAnyMesh() const
 	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
 		if (Mesh) return true;
 	return false;
-}
-
-// ai generated
-TArray<TArray<int32>> UHexMapGeneratorComponent::BuildDepthMap()
-{
-	FDepthMapGenerator Generator;
-	Generator.Width = FieldMetadata.MapWidth;
-	Generator.Height = FieldMetadata.MapHeight;
-	Generator.LevelsCount = Settings.DepthLevelMeshes.Num();
-	Generator.GenerationLevels = Settings.GenerationLevels;
-	return Generator.GetQuantizeMap();
 }
 
 // ai generated
@@ -42,7 +22,7 @@ void UHexMapGeneratorComponent::Regenerate()
 #if WITH_EDITOR
 	bSuppressPropertyRegen = true;
 #endif
-	ApplySeeds();
+	FHexMapManager::ApplySeeds(Settings.GlobalSeed, Settings.GenerationLevels);
 #if WITH_EDITOR
 	bSuppressPropertyRegen = false;
 #endif
@@ -54,7 +34,7 @@ void UHexMapGeneratorComponent::Regenerate()
 	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
 		Meshes.Add(Mesh);
 
-	Manager.InitMap(Anchor, BuildDepthMap(), Meshes);
+	Manager.InitMap(Anchor, Manager.BuildDepthMap(Settings.DepthLevelMeshes.Num(), Settings.GenerationLevels), Meshes);
 }
 
 // ai generated

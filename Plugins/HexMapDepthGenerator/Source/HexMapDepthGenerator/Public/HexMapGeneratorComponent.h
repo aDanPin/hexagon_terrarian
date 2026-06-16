@@ -43,7 +43,5 @@ public:
 private:
 	FHexMapManager Manager;
 
-	void ApplySeeds();
 	bool HasAnyMesh() const;
-	TArray<TArray<int32>> BuildDepthMap();
 };

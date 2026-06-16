@@ -1,11 +1,32 @@
 #include "DepthMapGenerator.h"
-#include "HexMapTransforms.h"
 #include "Math/RandomStream.h"
 
 namespace
 {
 	constexpr float SCALE_X_BASE = 0.08f;
 	constexpr float SCALE_Y_BASE = 0.04f;
+
+	float AlphaBettaToPx(int32 Alpha, int32 Beta, float HexRadius)
+	{
+		float X = 3.0f * HexRadius * Alpha;
+		if ((Beta & 1) != 0)
+			X += 1.5f * HexRadius;
+		return X;
+	}
+
+	float AlphaBettaToPz(int32 Alpha, int32 Beta, float HexRadius)
+	{
+		return -FMath::Cos(FMath::DegreesToRadians(30.0f)) * HexRadius * Beta;
+	}
+
+	float HexCellDistance(int32 X1, int32 Y1, int32 X2, int32 Y2, float HexRadius)
+	{
+		float PX1 = AlphaBettaToPx(X1, Y1, HexRadius);
+		float PZ1 = AlphaBettaToPz(X1, Y1, HexRadius);
+		float PX2 = AlphaBettaToPx(X2, Y2, HexRadius);
+		float PZ2 = AlphaBettaToPz(X2, Y2, HexRadius);
+		return FMath::Sqrt((PX1 - PX2) * (PX1 - PX2) + (PZ1 - PZ2) * (PZ1 - PZ2)) / (2.0f * HexRadius);
+	}
 }
 
 // ai generated
@@ -147,7 +168,7 @@ void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
 				if (!Point.bEnabled) continue;
 				int32 PosX = FMath::RoundToInt(Point.X * Width);
 				int32 PosY = FMath::RoundToInt(Point.Y * Height);
-				float Distance = FHexMapTransforms::Distance(i, j, PosX, PosY, 1.0f);
+				float Distance = HexCellDistance(i, j, PosX, PosY, 1.0f);
 				
 				if (Distance < Point.Radius) {
 					Value = 1.0f;

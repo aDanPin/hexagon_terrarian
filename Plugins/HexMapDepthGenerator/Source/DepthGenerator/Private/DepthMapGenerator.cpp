@@ -1,3 +1,5 @@
+// Copyright DaniElRuso 2026. All Rights Reserved.
+
 #include "DepthMapGenerator.h"
 #include "Math/RandomStream.h"
 

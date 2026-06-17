@@ -2,32 +2,53 @@
   "FileVersion": 3,
   "Version": 1,
   "VersionName": "1.0",
-  "FriendlyName": "Hex Map Depth Generator",
-  "Description": "Procedural hexagonal map generator. Add a component to any actor, set depth-level meshes and noise layers, and generate seeded hex maps directly in the editor.",
+  "FriendlyName": "Advanced Hex Map Depth Generator",
+  "Description": "Advanced hex depth map generator. 
+Seed-based procedural generation. 
+Support for custom patterns that allow creating template maps: continents, islands, one large island, plains with lakes, etc. 
+Support for custom meshes for hexes. 
+Support for generating hex map data without generating the map on the scene, for manual map creation by the user.
+",
   "Category": "Geometry",
   "CreatedBy": "DaniElRuso",
   "CreatedByURL": "",
   "DocsURL": "",
   "MarketplaceURL": "",
+  "FabURL": "",
   "SupportURL": "",
   "EngineVersion": "5.7.0",
-  "CanContainContent": false,
+  "CanContainContent": true,
   "Installed": false,
   "Modules": [
     {
       "Name": "HexMap",
       "Type": "Runtime",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "PlatformAllowList": [
+        "Win64",
+        "Mac",
+        "Linux"
+      ]
     },
     {
       "Name": "DepthGenerator",
       "Type": "Runtime",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "PlatformAllowList": [
+        "Win64",
+        "Mac",
+        "Linux"
+      ]
     },
     {
       "Name": "HexMapDepthGenerator",
       "Type": "Runtime",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "PlatformAllowList": [
+        "Win64",
+        "Mac",
+        "Linux"
+      ]
     }
   ]
 }

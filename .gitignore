@@ -4,6 +4,7 @@ DerivedDataCache/
 Intermediate/
 Saved/
 Build/
+Packaged/
 
 # Visual Studio / Rider
 .vs/

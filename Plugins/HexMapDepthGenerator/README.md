@@ -1,6 +1,10 @@
-# Hex Map Depth Generator
+# Advanced Hex Map Depth Generator
 
-Procedural hexagonal map generator for Unreal Engine. It builds a seeded depth map from configurable noise layers and places hex meshes per depth level using a Hierarchical Instanced Static Mesh, right in the editor.
+Advanced hex depth map generator. 
+Seed-based procedural generation. 
+Support for custom patterns that allow creating template maps: continents, islands, one large island, plains with lakes, etc. 
+Support for custom meshes for hexes. 
+Support for generating hex map data without generating the map on the scene, for manual map creation by the user.
 
 ## Install
 
@@ -21,12 +25,5 @@ Procedural hexagonal map generator for Unreal Engine. It builds a seeded depth m
 - `GlobalSeed` - seed; derives per-layer seeds deterministically.
 - `DepthLevelMeshes` - mesh used for each depth level; the level count equals the number of meshes.
 - `GenerationLevels` - noise layers (Perlin / Euclidean / Value) with amplitude, power and apply mode (Add, Subtract, Multiply, Lerp, Replace) combined into the final depth.
-- `Regenerate` - rebuilds the map.
 
-## Modules
-
-- `HexMap` - hex grid math and mesh placement.
-- `DepthGenerator` - depth map generation from noise layers.
-- `HexMapDepthGenerator` - the `UHexMapGeneratorComponent` user-facing component.
-
-Example meshes and a demo map are provided in the accompanying demo project.
+Example meshes and a demo map are in `Content/Demo/`.

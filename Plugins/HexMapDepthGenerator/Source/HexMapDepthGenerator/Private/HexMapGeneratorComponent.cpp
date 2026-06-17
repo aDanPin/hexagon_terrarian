@@ -50,6 +50,17 @@ int32 UHexMapGeneratorComponent::PickMeshIndex(const TArray<TArray<int32>>& Dept
 }
 
 // ai generated
+float UHexMapGeneratorComponent::GetHeightOffset(const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const
+{
+	if (DepthMap.IsValidIndex(Beta) && DepthMap[Beta].IsValidIndex(Alpha)
+		&& DepthMap[Beta][Alpha] > Settings.InitialLineLevel)
+	{
+		return Settings.heightOffset * (DepthMap[Beta][Alpha] - Settings.InitialLineLevel);
+	}
+	return 0.f;
+}
+
+// ai generated
 void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthMap, const TArray<UStaticMesh*>& DepthMeshes)
 {
 	if (!GetWorld() || !Anchor || DepthMeshes.Num() == 0) return;
@@ -90,7 +101,7 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 			FVector Location = Origin + FVector(
 				FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, FieldMetadata.HexRadius),
 				-FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
-				0.0f);
+				GetHeightOffset(DepthMap, Beta, Alpha));
 			Batches[Idx].Add(FTransform(FRotator(0.0f, FieldMetadata.HexRotation, 0.0f), Location));
 		}
 	}
@@ -131,7 +142,7 @@ TArray<FHexCellInfo> UHexMapGeneratorComponent::GetHexCells() const
 			const FVector Location = Origin + FVector(
 				FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, FieldMetadata.HexRadius),
 				-FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
-				0.0f);
+				GetHeightOffset(DepthMap, Beta, Alpha));
 
 			FHexCellInfo Cell;
 			Cell.X = Location.X;

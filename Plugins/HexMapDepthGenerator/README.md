@@ -6,6 +6,8 @@ Support for custom patterns that allow creating template maps: continents, islan
 Support for custom meshes for hexes. 
 Support for generating hex map data without generating the map on the scene, for manual map creation by the user.
 
+**Requirements:** Unreal Engine 5.7.0 or later (Win64, Mac, Linux).
+
 ## Install
 
 1. Copy the `HexMapDepthGenerator` folder into your project's `Plugins/` directory.

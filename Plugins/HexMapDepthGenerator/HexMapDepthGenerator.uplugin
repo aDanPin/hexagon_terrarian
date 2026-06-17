@@ -1,21 +1,17 @@
+// Copyright DaniElRuso 2026. All Rights Reserved.
 {
   "FileVersion": 3,
   "Version": 1,
   "VersionName": "1.0",
   "FriendlyName": "Advanced Hex Map Depth Generator",
-  "Description": "Advanced hex depth map generator. 
-Seed-based procedural generation. 
-Support for custom patterns that allow creating template maps: continents, islands, one large island, plains with lakes, etc. 
-Support for custom meshes for hexes. 
-Support for generating hex map data without generating the map on the scene, for manual map creation by the user.
-",
+  "Description": "Advanced hex depth map generator. \nSeed-based procedural generation. \nSupport for custom patterns that allow creating template maps: continents, islands, one large island, plains with lakes, etc. \nSupport for custom meshes for hexes. \nSupport for generating hex map data without generating the map on the scene, for manual map creation by the user.",
   "Category": "Geometry",
   "CreatedBy": "DaniElRuso",
-  "CreatedByURL": "",
+  "CreatedByURL": "https://github.com/aDanPin/",
   "DocsURL": "",
   "MarketplaceURL": "",
   "FabURL": "",
-  "SupportURL": "",
+  "SupportURL": "https://github.com/aDanPin/",
   "EngineVersion": "5.7.0",
   "CanContainContent": true,
   "Installed": false,

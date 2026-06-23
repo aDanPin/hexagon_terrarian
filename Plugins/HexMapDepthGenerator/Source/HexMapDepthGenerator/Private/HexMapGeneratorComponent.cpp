@@ -1,4 +1,4 @@
-// Copyright DaniElRuso 2026. All Rights Reserved.
+// Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
 
 #include "HexMapGeneratorComponent.h"
 #include "HexMapTransforms.h"

@@ -30,3 +30,6 @@ Desktop.ini
 *.obj
 *.lib
 *.pch
+
+# Plugin docs
+Plugins/HexMapDepthGenerator/Docs/

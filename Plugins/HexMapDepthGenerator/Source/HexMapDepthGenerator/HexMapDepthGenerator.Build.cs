@@ -1,3 +1,5 @@
+// Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
+
 using UnrealBuildTool;
 
 public class HexMapDepthGenerator : ModuleRules

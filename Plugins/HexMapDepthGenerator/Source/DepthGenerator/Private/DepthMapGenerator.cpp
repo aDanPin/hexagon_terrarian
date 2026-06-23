@@ -1,4 +1,4 @@
-// Copyright DaniElRuso 2026. All Rights Reserved.
+// Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
 
 #include "DepthMapGenerator.h"
 #include "Math/RandomStream.h"
@@ -111,7 +111,7 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 			if (!Level.bIncludeRight && OperatorValue >= 1.0f) continue;
 
 			OperatorValue = FMath::Pow(OperatorValue, Level.Power);
-			OperatorValue = FMath::Clamp(OperatorValue, Level.AmplitudeLeft, Level.AmplitudeRight);
+			OperatorValue = FMath::Lerp(Level.AmplitudeLeft, Level.AmplitudeRight, OperatorValue);
 
 			switch (Level.ApplyMode)
 			{

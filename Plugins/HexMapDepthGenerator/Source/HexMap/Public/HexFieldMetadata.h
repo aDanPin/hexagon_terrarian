@@ -1,4 +1,4 @@
-// Copyright DaniElRuso 2026. All Rights Reserved.
+// Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
 
 #pragma once
 
@@ -10,15 +10,15 @@ struct FHexFieldMetadata
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	int32 MapWidth = 11;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	int32 MapHeight = 11;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float HexRadius = 1.7f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float HexRotation = 0.0f;
 };

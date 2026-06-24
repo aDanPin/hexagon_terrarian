@@ -46,6 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	TObjectPtr<UHexMapGeneratorPreset> Preset;
 
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	bool bDrawDebugGrid = false;
+
 	UFUNCTION(CallInEditor, Category="Hex Map Generator")
 	void Regenerate();
 
@@ -70,6 +73,9 @@ private:
 	bool HasAnyMesh() const;
 	void InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthMap, const TArray<UStaticMesh*>& DepthMeshes);
 	void ClearHISM(AActor* Anchor) const;
+	void ClearDebugGrid(AActor* Anchor) const;
+	void DrawDebugGrid(AActor* Anchor, const TArray<TArray<int32>>& DepthMap) const;
+	FVector GetHexCellWorldLocation(const FVector& Origin, const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const;
 	static int32 PickMeshIndex(const TArray<TArray<int32>>& DepthMap, int32 MeshCount, int32 Beta, int32 Alpha);
 	float GetHeightOffset(const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const;
 };

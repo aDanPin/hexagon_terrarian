@@ -4,6 +4,8 @@
 #include "HexMapTransforms.h"
 #include "GameFramework/Actor.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Components/LineBatchComponent.h"
+#include "DrawDebugHelpers.h"
 #include "Engine/StaticMesh.h"
 
 UHexMapGeneratorComponent::UHexMapGeneratorComponent()
@@ -43,6 +45,73 @@ void UHexMapGeneratorComponent::ClearHISM(AActor* Anchor) const
 }
 
 // ai generated
+void UHexMapGeneratorComponent::ClearDebugGrid(AActor* Anchor) const
+{
+	TArray<ULineBatchComponent*> Existing;
+	Anchor->GetComponents(Existing);
+	for (ULineBatchComponent* Comp : Existing)
+		if (Comp) Comp->DestroyComponent();
+	if (UWorld* World = GetWorld())
+		FlushPersistentDebugLines(World);
+}
+
+// ai generated
+FVector UHexMapGeneratorComponent::GetHexCellWorldLocation(const FVector& Origin, const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const
+{
+	return Origin + FVector(
+		-FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, FieldMetadata.HexRadius),
+		FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
+		GetHeightOffset(DepthMap, Beta, Alpha));
+}
+
+void UHexMapGeneratorComponent::DrawDebugGrid(AActor* Anchor, const TArray<TArray<int32>>& DepthMap) const
+{
+	UWorld* World = GetWorld();
+	if (!World || !Anchor || !bDrawDebugGrid) return;
+
+	ULineBatchComponent* LineBatch = NewObject<ULineBatchComponent>(
+		Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
+	LineBatch->SetupAttachment(Anchor->GetRootComponent());
+	LineBatch->RegisterComponent();
+	Anchor->AddInstanceComponent(LineBatch);
+#if WITH_EDITOR
+	LineBatch->Modify();
+#endif
+
+	const float R = FieldMetadata.HexRadius;
+	const float RotRad = FMath::DegreesToRadians(FieldMetadata.HexRotation + 30.f);
+	const FVector Origin = Anchor->GetActorLocation();
+	const FLinearColor GridColor(0.f, 1.f, 0.f);
+	const int32 LevelsAboveInitial = FMath::Max(0, Settings.DepthLevelMeshes.Num() - Settings.InitialLineLevel + 2);
+	const float GridZ = Origin.Z + LevelsAboveInitial * Settings.heightOffset;
+
+	for (int32 Beta = 0; Beta < FieldMetadata.MapHeight; Beta++)
+	{
+		for (int32 Alpha = 0; Alpha < FieldMetadata.MapWidth; Alpha++)
+		{
+			FVector Center = GetHexCellWorldLocation(Origin, DepthMap, Beta, Alpha);
+			Center.Z = GridZ;
+
+			FVector Prev;
+			for (int32 i = 0; i <= 6; i++)
+			{
+				const float Angle = RotRad + FMath::DegreesToRadians(60.f * (i % 6));
+				const FVector V = Center + FVector(R * FMath::Cos(Angle), R * FMath::Sin(Angle), 0.f);
+				if (i > 0)
+				{
+					LineBatch->DrawLine(Prev, V, GridColor, SDPG_World, 1.f);
+				}
+				Prev = V;
+			}
+		}
+	}
+
+#if WITH_EDITOR
+	LineBatch->MarkRenderStateDirty();
+#endif
+}
+
+// ai generated
 int32 UHexMapGeneratorComponent::PickMeshIndex(const TArray<TArray<int32>>& DepthMap, int32 MeshCount, int32 Beta, int32 Alpha)
 {
 	if (DepthMap.Num() == 0 || Beta < 0 || Beta >= DepthMap.Num()) return 0;
@@ -72,6 +141,7 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 #endif
 
 	ClearHISM(Anchor);
+	ClearDebugGrid(Anchor);
 
 	TArray<UHierarchicalInstancedStaticMeshComponent*> Components;
 	TArray<TArray<FTransform>> Batches;
@@ -100,10 +170,7 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 		{
 			int32 Idx = PickMeshIndex(DepthMap, DepthMeshes.Num(), Beta, Alpha);
 			if (!Components.IsValidIndex(Idx) || !Components[Idx]) continue;
-			FVector Location = Origin + FVector(
-				-FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, FieldMetadata.HexRadius),
-				FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
-				GetHeightOffset(DepthMap, Beta, Alpha));
+			const FVector Location = GetHexCellWorldLocation(Origin, DepthMap, Beta, Alpha);
 			Batches[Idx].Add(FTransform(FRotator(0.0f, FieldMetadata.HexRotation, 0.0f), Location));
 		}
 	}
@@ -116,6 +183,9 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 		Components[i]->MarkRenderStateDirty();
 #endif
 	}
+
+	if (bDrawDebugGrid)
+		DrawDebugGrid(Anchor, DepthMap);
 
 #if WITH_EDITOR
 	Anchor->MarkPackageDirty();
@@ -141,10 +211,7 @@ TArray<FHexCellInfo> UHexMapGeneratorComponent::GetHexCells() const
 	{
 		for (int32 Alpha = 0; Alpha < FieldMetadata.MapWidth; Alpha++)
 		{
-			const FVector Location = Origin + FVector(
-				FHexMapTransforms::AlphaBettaToPz(Alpha, Beta, FieldMetadata.HexRadius),
-				-FHexMapTransforms::AlphaBettaToPx(Alpha, Beta, FieldMetadata.HexRadius),
-				GetHeightOffset(DepthMap, Beta, Alpha));
+			const FVector Location = GetHexCellWorldLocation(Origin, DepthMap, Beta, Alpha);
 
 			FHexCellInfo Cell;
 			Cell.X = Location.X;

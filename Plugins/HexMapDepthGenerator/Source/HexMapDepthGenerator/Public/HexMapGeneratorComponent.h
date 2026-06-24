@@ -49,6 +49,9 @@ public:
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	bool bDrawDebugGrid = false;
 
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator", meta=(ClampMin="0.1"))
+	float DebugGridLineThickness = 1.f;
+
 	UFUNCTION(CallInEditor, Category="Hex Map Generator")
 	void Regenerate();
 

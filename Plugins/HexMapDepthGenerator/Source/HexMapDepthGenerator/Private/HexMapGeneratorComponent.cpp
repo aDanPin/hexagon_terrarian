@@ -99,7 +99,7 @@ void UHexMapGeneratorComponent::DrawDebugGrid(AActor* Anchor, const TArray<TArra
 				const FVector V = Center + FVector(R * FMath::Cos(Angle), R * FMath::Sin(Angle), 0.f);
 				if (i > 0)
 				{
-					LineBatch->DrawLine(Prev, V, GridColor, SDPG_World, 1.f);
+					LineBatch->DrawLine(Prev, V, GridColor, SDPG_World, DebugGridLineThickness);
 				}
 				Prev = V;
 			}

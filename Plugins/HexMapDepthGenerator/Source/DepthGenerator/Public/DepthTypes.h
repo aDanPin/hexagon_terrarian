@@ -52,7 +52,7 @@ struct DEPTHGENERATOR_API FDepthLevelConfig
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	bool bEnabled = true;
 
-	UPROPERTY(VisibleAnywhere, Category="Advanced Hex Map Depth Generator")
+	UPROPERTY(meta=(Hidden))
 	int32 Seed = 12345;
 
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
@@ -60,15 +60,12 @@ struct DEPTHGENERATOR_API FDepthLevelConfig
 
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float AmplitudeRight = 1.0f;
-
-	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
-	bool bIncludeLeft = true;
-
-	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
-	bool bIncludeRight = true;
-
+	
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float Power = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
+	bool Invert = false;
 
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	EApplyMode ApplyMode = EApplyMode::Add;

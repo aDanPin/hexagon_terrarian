@@ -107,11 +107,9 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 		{
 			float OperatorValue = OperatorMap[i][j];
 
-			if (!Level.bIncludeLeft && OperatorValue <= 0.0f) continue;
-			if (!Level.bIncludeRight && OperatorValue >= 1.0f) continue;
-
 			OperatorValue = FMath::Pow(OperatorValue, Level.Power);
 			OperatorValue = FMath::Lerp(Level.AmplitudeLeft, Level.AmplitudeRight, OperatorValue);
+			OperatorValue = Level.Invert ? 1.0f - OperatorValue : OperatorValue;
 
 			switch (Level.ApplyMode)
 			{
@@ -195,3 +193,4 @@ void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level)
 		OperatorMap[j].Init(Level.Value, Width);
 	}
 }
+

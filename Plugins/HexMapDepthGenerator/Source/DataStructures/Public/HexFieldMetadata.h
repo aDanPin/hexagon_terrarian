@@ -6,7 +6,7 @@
 #include "HexFieldMetadata.generated.h"
 
 USTRUCT(BlueprintType)
-struct FHexFieldMetadata
+struct DATASTRUCTURES_API FHexFieldMetadata
 {
 	GENERATED_BODY()
 

@@ -6,6 +6,7 @@ public class HexMap: ModuleRules
 {
     public HexMap(ReadOnlyTargetRules Target) : base(Target)
     {
-        PrivateDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "DepthGenerator"});
+        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "DataStructures"});
+        PrivateDependencyModuleNames.AddRange(new string[] {"DepthGenerator"});
     }
 }

@@ -5,29 +5,12 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Templates/SubclassOf.h"
+#include "HexCellInfo.h"
 #include "HexFieldMetadata.h"
 #include "HexMapGeneratorSettings.h"
 #include "HexMapManager.h"
 #include "HexMapGeneratorPreset.h"
 #include "HexMapGeneratorComponent.generated.h"
-
-USTRUCT(BlueprintType)
-struct FHexCellInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category="Hex")
-	float X = 0.f;
-
-	UPROPERTY(BlueprintReadOnly, Category="Hex")
-	float Y = 0.f;
-
-	UPROPERTY(BlueprintReadOnly, Category="Hex")
-	float Z = 0.f;
-
-	UPROPERTY(BlueprintReadOnly, Category="Hex")
-	int32 DepthLevel = 0;
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class HEXMAPDEPTHGENERATOR_API UHexMapGeneratorComponent : public UActorComponent

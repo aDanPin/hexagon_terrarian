@@ -9,7 +9,7 @@
 class UStaticMesh;
 
 USTRUCT(BlueprintType)
-struct HEXMAPDEPTHGENERATOR_API FHexMapGeneratorSettings
+struct DATASTRUCTURES_API FHexMapGeneratorSettings
 {
 	GENERATED_BODY()
 

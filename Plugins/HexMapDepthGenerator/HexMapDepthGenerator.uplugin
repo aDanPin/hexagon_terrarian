@@ -16,6 +16,16 @@
   "Installed": false,
   "Modules": [
     {
+      "Name": "DataStructures",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "PlatformAllowList": [
+        "Win64",
+        "Mac",
+        "Linux"
+      ]
+    },
+    {
       "Name": "HexMap",
       "Type": "Runtime",
       "LoadingPhase": "Default",

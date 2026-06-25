@@ -24,7 +24,7 @@ enum class ENoiseLayerType : uint8
 };
 
 USTRUCT()
-struct DEPTHGENERATOR_API FEuclideanPoint
+struct DATASTRUCTURES_API FEuclideanPoint
 {
 	GENERATED_BODY()
 
@@ -42,7 +42,7 @@ struct DEPTHGENERATOR_API FEuclideanPoint
 };
 
 USTRUCT()
-struct DEPTHGENERATOR_API FDepthLevelConfig
+struct DATASTRUCTURES_API FDepthLevelConfig
 {
 	GENERATED_BODY()
 

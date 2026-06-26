@@ -12,7 +12,9 @@ enum class EApplyMode : uint8
 	Subtract,
 	Multiply,
 	Lerp,
-	Replace
+	Replace,
+	ReplaceIfAbove,
+	ReplaceIfBelow
 };
 
 UENUM()
@@ -61,6 +63,12 @@ struct DATASTRUCTURES_API FDepthLevelConfig
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float AmplitudeRight = 1.0f;
 	
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
+	float ApplyWindowLeft = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
+	float ApplyWindowRight = 1.0f;
+
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float Power = 1.0f;
 

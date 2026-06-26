@@ -105,8 +105,10 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 	{
 		for (int32 j = 0; j < Width; j++)
 		{
-			float OperatorValue = OperatorMap[i][j];
+			if (Map[i][j] < Level.ApplyWindowLeft || Map[i][j] > Level.ApplyWindowRight)
+				continue;
 
+			float OperatorValue = OperatorMap[i][j];
 			OperatorValue = FMath::Pow(OperatorValue, Level.Power);
 			OperatorValue = FMath::Lerp(Level.AmplitudeLeft, Level.AmplitudeRight, OperatorValue);
 			OperatorValue = Level.Invert ? 1.0f - OperatorValue : OperatorValue;
@@ -121,6 +123,14 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 				break;
 			case EApplyMode::Replace:
 				Map[i][j] = OperatorValue;
+				break;
+			case EApplyMode::ReplaceIfAbove:
+				if (Map[i][j] < OperatorValue)
+					Map[i][j] = OperatorValue;
+				break;
+			case EApplyMode::ReplaceIfBelow:
+				if (Map[i][j] > OperatorValue)
+					Map[i][j] = OperatorValue;
 				break;
 			case EApplyMode::Lerp:
 				Map[i][j] = FMath::Lerp(Map[i][j], OperatorValue, Level.Power);

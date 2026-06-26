@@ -81,7 +81,7 @@ void UHexMapGeneratorComponent::DrawDebugGrid(AActor* Anchor, const TArray<TArra
 	const float R = FieldMetadata.HexRadius;
 	const float RotRad = FMath::DegreesToRadians(FieldMetadata.HexRotation + 30.f);
 	const FVector Origin = Anchor->GetActorLocation();
-	const FLinearColor GridColor(0.f, 1.f, 0.f);
+	const FLinearColor GridColor(1.f, 1.f, 1.f);
 	const int32 LevelsAboveInitial = FMath::Max(0, Settings.DepthLevelMeshes.Num() - Settings.InitialLineLevel + 2);
 	const float GridZ = Origin.Z + LevelsAboveInitial * Settings.heightOffset;
 

@@ -13,13 +13,16 @@ struct DATASTRUCTURES_API FHexMapGeneratorSettings
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator", meta=(ClampMin="1"))
+	int32 DepthLevelCount = 5;
+
+	UPROPERTY()
 	TArray<TObjectPtr<UStaticMesh>> DepthLevelMeshes;
 
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
-	int32 InitialLineLevel = 0;
+	int32 WaterLevel = 0;
 
-	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	UPROPERTY()
 	float heightOffset = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
@@ -27,4 +30,11 @@ struct DATASTRUCTURES_API FHexMapGeneratorSettings
 
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	TArray<FDepthLevelConfig> GenerationLevels;
+
+	// ai generated
+	void SyncDepthLevelMeshes()
+	{
+		DepthLevelCount = FMath::Max(1, DepthLevelCount);
+		DepthLevelMeshes.SetNum(DepthLevelCount);
+	}
 };

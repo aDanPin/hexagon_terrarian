@@ -8,6 +8,6 @@ public class HexMapDepthGenerator : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "DataStructures", "DepthGenerator", "HexMap" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "DataStructures", "DepthGenerator", "HexMap", "HexShaderVisualizer" });
 	}
 }

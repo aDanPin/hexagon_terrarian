@@ -2,15 +2,25 @@
 
 #include "HexMapGeneratorComponent.h"
 #include "HexMapTransforms.h"
+#include "HexCellShaderVisualizer.h"
 #include "GameFramework/Actor.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/LineBatchComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/StaticMesh.h"
+#include "Materials/MaterialInterface.h"
 
 UHexMapGeneratorComponent::UHexMapGeneratorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	Settings.SyncDepthLevelMeshes();
+}
+
+// ai generated
+void UHexMapGeneratorComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	Regenerate();
 }
 
 bool UHexMapGeneratorComponent::HasAnyMesh() const
@@ -24,15 +34,33 @@ bool UHexMapGeneratorComponent::HasAnyMesh() const
 void UHexMapGeneratorComponent::Regenerate()
 {
 	AActor* Anchor = GetOwner();
-	if (!Anchor || !HasAnyMesh()) return;
-
-	TArray<UStaticMesh*> Meshes;
-	for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
-		Meshes.Add(Mesh);
+	if (!Anchor) return;
 
 	Manager.SetMetadata(FieldMetadata);
 	Manager.SetSettings(Settings.GlobalSeed, Settings.GenerationLevels);
-	InitMap(Anchor, Manager.BuildDepthMap(Settings.DepthLevelMeshes.Num()), Meshes);
+
+	Settings.SyncDepthLevelMeshes();
+	const int32 LevelCount = Settings.DepthLevelCount;
+	const TArray<TArray<int32>> DepthMap = Manager.BuildDepthMap(LevelCount);
+
+	if (Visualization.VisualizationMode == EHexMapVisualizationMode::Shader)
+	{
+		InitMapShader(Anchor, DepthMap);
+		return;
+	}
+	else if (Visualization.VisualizationMode == EHexMapVisualizationMode::Mesh)
+	{
+		if (!HasAnyMesh()) return;
+		TArray<UStaticMesh*> Meshes;
+		for (const TObjectPtr<UStaticMesh>& Mesh : Settings.DepthLevelMeshes)
+			Meshes.Add(Mesh);
+		InitMap(Anchor, DepthMap, Meshes);
+		return;
+	}
+
+	if (!HasAnyMesh()) return;
+
+
 }
 
 // ai generated
@@ -42,6 +70,19 @@ void UHexMapGeneratorComponent::ClearHISM(AActor* Anchor) const
 	Anchor->GetComponents(Existing);
 	for (UHierarchicalInstancedStaticMeshComponent* Comp : Existing)
 		if (Comp) Comp->DestroyComponent();
+}
+
+// ai generated
+void UHexMapGeneratorComponent::ClearShaderVisualizer(AActor* Anchor) const
+{
+	TArray<UHexCellShaderVisualizer*> Existing;
+	Anchor->GetComponents(Existing);
+	for (UHexCellShaderVisualizer* Comp : Existing)
+	{
+		if (!Comp) continue;
+		Comp->Clear();
+		Comp->DestroyComponent();
+	}
 }
 
 // ai generated
@@ -67,7 +108,7 @@ FVector UHexMapGeneratorComponent::GetHexCellWorldLocation(const FVector& Origin
 void UHexMapGeneratorComponent::DrawDebugGrid(AActor* Anchor, const TArray<TArray<int32>>& DepthMap) const
 {
 	UWorld* World = GetWorld();
-	if (!World || !Anchor || !bDrawDebugGrid) return;
+	if (!World || !Anchor || !Visualization.bDrawDebugGrid) return;
 
 	ULineBatchComponent* LineBatch = NewObject<ULineBatchComponent>(
 		Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
@@ -82,7 +123,7 @@ void UHexMapGeneratorComponent::DrawDebugGrid(AActor* Anchor, const TArray<TArra
 	const float RotRad = FMath::DegreesToRadians(FieldMetadata.HexRotation + 30.f);
 	const FVector Origin = Anchor->GetActorLocation();
 	const FLinearColor GridColor(1.f, 1.f, 1.f);
-	const int32 LevelsAboveInitial = FMath::Max(0, Settings.DepthLevelMeshes.Num() - Settings.InitialLineLevel + 2);
+	const int32 LevelsAboveInitial = FMath::Max(0, Settings.DepthLevelCount - Settings.WaterLevel + 2);
 	const float GridZ = Origin.Z + LevelsAboveInitial * Settings.heightOffset;
 
 	for (int32 Beta = 0; Beta < FieldMetadata.MapHeight; Beta++)
@@ -99,7 +140,7 @@ void UHexMapGeneratorComponent::DrawDebugGrid(AActor* Anchor, const TArray<TArra
 				const FVector V = Center + FVector(R * FMath::Cos(Angle), R * FMath::Sin(Angle), 0.f);
 				if (i > 0)
 				{
-					LineBatch->DrawLine(Prev, V, GridColor, SDPG_World, DebugGridLineThickness);
+					LineBatch->DrawLine(Prev, V, GridColor, SDPG_World, Visualization.DebugGridLineThickness);
 				}
 				Prev = V;
 			}
@@ -124,9 +165,9 @@ int32 UHexMapGeneratorComponent::PickMeshIndex(const TArray<TArray<int32>>& Dept
 float UHexMapGeneratorComponent::GetHeightOffset(const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const
 {
 	if (DepthMap.IsValidIndex(Beta) && DepthMap[Beta].IsValidIndex(Alpha)
-		&& DepthMap[Beta][Alpha] > Settings.InitialLineLevel)
+		&& DepthMap[Beta][Alpha] > Settings.WaterLevel)
 	{
-		return Settings.heightOffset * (DepthMap[Beta][Alpha] - Settings.InitialLineLevel);
+		return Settings.heightOffset * (DepthMap[Beta][Alpha] - Settings.WaterLevel);
 	}
 	return 0.f;
 }
@@ -140,6 +181,7 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 	Anchor->Modify();
 #endif
 
+	ClearShaderVisualizer(Anchor);
 	ClearHISM(Anchor);
 	ClearDebugGrid(Anchor);
 
@@ -184,7 +226,43 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<TArray<int3
 #endif
 	}
 
-	if (bDrawDebugGrid)
+	if (Visualization.bDrawDebugGrid)
+		DrawDebugGrid(Anchor, DepthMap);
+
+#if WITH_EDITOR
+	Anchor->MarkPackageDirty();
+#endif
+}
+
+// ai generated
+void UHexMapGeneratorComponent::InitMapShader(AActor* Anchor, const TArray<TArray<int32>>& DepthMap)
+{
+	if (!GetWorld() || !Anchor) return;
+
+#if WITH_EDITOR
+	Anchor->Modify();
+#endif
+
+	ClearHISM(Anchor);
+	ClearShaderVisualizer(Anchor);
+	ClearDebugGrid(Anchor);
+
+	UHexCellShaderVisualizer* Viz = NewObject<UHexCellShaderVisualizer>(
+		Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
+	Viz->Material = Visualization.ShaderMaterial;
+	Viz->HexRadius = FieldMetadata.HexRadius;
+	Viz->HexRotation = FieldMetadata.HexRotation;
+	Viz->MapWidth = FieldMetadata.MapWidth;
+	Viz->MapHeight = FieldMetadata.MapHeight;
+	Viz->Origin = Anchor->GetActorLocation();
+	Viz->RegisterComponent();
+	Anchor->AddInstanceComponent(Viz);
+#if WITH_EDITOR
+	Viz->Modify();
+#endif
+	Viz->SetCells(GetHexCells());
+
+	if (Visualization.bDrawDebugGrid)
 		DrawDebugGrid(Anchor, DepthMap);
 
 #if WITH_EDITOR
@@ -202,7 +280,8 @@ TArray<FHexCellInfo> UHexMapGeneratorComponent::GetHexCells() const
 	FHexMapManager LocalManager;
 	LocalManager.SetMetadata(FieldMetadata);
 	LocalManager.SetSettings(Settings.GlobalSeed, Settings.GenerationLevels);
-	const TArray<TArray<int32>> DepthMap = LocalManager.BuildDepthMap(Settings.DepthLevelMeshes.Num());
+	const int32 LevelCount = FMath::Max(1, Settings.DepthLevelCount);
+	const TArray<TArray<int32>> DepthMap = LocalManager.BuildDepthMap(LevelCount);
 
 	const FVector Origin = Anchor->GetActorLocation();
 	Result.Reserve(FieldMetadata.MapWidth * FieldMetadata.MapHeight);
@@ -261,6 +340,7 @@ void UHexMapGeneratorComponent::LoadPreset()
 void UHexMapGeneratorComponent::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeChainProperty(PropertyChangedEvent);
+	Settings.SyncDepthLevelMeshes();
 	if (bSuppressPropertyRegen) return;
 	Regenerate();
 }

@@ -4,13 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Templates/SubclassOf.h"
 #include "HexCellInfo.h"
 #include "HexFieldMetadata.h"
 #include "HexMapGeneratorSettings.h"
+#include "HexMapVisualizationSettings.h"
 #include "HexMapManager.h"
 #include "HexMapGeneratorPreset.h"
 #include "HexMapGeneratorComponent.generated.h"
+
+class UHexCellShaderVisualizer;
+class UStaticMesh;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class HEXMAPDEPTHGENERATOR_API UHexMapGeneratorComponent : public UActorComponent
@@ -20,20 +23,19 @@ class HEXMAPDEPTHGENERATOR_API UHexMapGeneratorComponent : public UActorComponen
 public:
 	UHexMapGeneratorComponent();
 
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	TObjectPtr<UHexMapGeneratorPreset> Preset;
+
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	FHexFieldMetadata FieldMetadata;
 
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	FHexMapGeneratorSettings Settings;
 
-	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
-	TObjectPtr<UHexMapGeneratorPreset> Preset;
-
-	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
-	bool bDrawDebugGrid = false;
-
-	UPROPERTY(EditAnywhere, Category="Hex Map Generator", meta=(ClampMin="0.1"))
-	float DebugGridLineThickness = 1.f;
+	UPROPERTY()
+	FHexMapVisualizationSettings Visualization;
 
 	UFUNCTION(CallInEditor, Category="Hex Map Generator")
 	void Regenerate();
@@ -47,7 +49,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Hex Map Generator")
 	TArray<FHexCellInfo> GetHexCells() const;
 
-
 #if WITH_EDITOR
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	bool bSuppressPropertyRegen = false;
@@ -58,7 +59,9 @@ private:
 
 	bool HasAnyMesh() const;
 	void InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthMap, const TArray<UStaticMesh*>& DepthMeshes);
+	void InitMapShader(AActor* Anchor, const TArray<TArray<int32>>& DepthMap);
 	void ClearHISM(AActor* Anchor) const;
+	void ClearShaderVisualizer(AActor* Anchor) const;
 	void ClearDebugGrid(AActor* Anchor) const;
 	void DrawDebugGrid(AActor* Anchor, const TArray<TArray<int32>>& DepthMap) const;
 	FVector GetHexCellWorldLocation(const FVector& Origin, const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const;

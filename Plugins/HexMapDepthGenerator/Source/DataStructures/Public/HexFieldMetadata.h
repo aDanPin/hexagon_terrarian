@@ -19,6 +19,6 @@ struct DATASTRUCTURES_API FHexFieldMetadata
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float HexRadius = 1.7f;
 
-	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
+	UPROPERTY()
 	float HexRotation = 0.0f;
 };

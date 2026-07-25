@@ -22,6 +22,7 @@ enum class ENoiseLayerType : uint8
 {
 	Perlin,
 	Euclidean,
+	PerlinEuclidean,
 	Value
 };
 
@@ -69,8 +70,11 @@ struct DATASTRUCTURES_API FDepthLevelConfig
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	float ApplyWindowRight = 1.0f;
 
-	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
-	float Power = 1.0f;
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Perlin||Type==ENoiseLayerType::PerlinEuclidean"))
+	float PerlinPower = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Euclidean||Type==ENoiseLayerType::PerlinEuclidean"))
+	float EuclideanPower = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	bool Invert = false;
@@ -78,15 +82,15 @@ struct DATASTRUCTURES_API FDepthLevelConfig
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator")
 	EApplyMode ApplyMode = EApplyMode::Add;
 
-	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Perlin"))
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Perlin||Type==ENoiseLayerType::PerlinEuclidean"))
 	float ScaleX = 1.0f;
 
-	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Perlin"))
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Perlin||Type==ENoiseLayerType::PerlinEuclidean"))
 	float ScaleY = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Value"))
 	float Value = 0.5f;
 
-	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Euclidean"))
+	UPROPERTY(EditAnywhere, Category="Advanced Hex Map Depth Generator", meta=(EditCondition="Type==ENoiseLayerType::Euclidean||Type==ENoiseLayerType::PerlinEuclidean"))
 	TArray<FEuclideanPoint> Points;
 };

@@ -91,6 +91,9 @@ void FDepthMapGenerator::ApplyNoiseLevel(int32 Index)
 	case ENoiseLayerType::Value:
 		ApplyValueLayer(Level);
 		break;
+	case ENoiseLayerType::PerlinEuclidean:
+		ApplyPerlinEuclideanLevel(Level);
+		break;
 	}
 
 	ApplyOperatorMap(Level);
@@ -109,7 +112,6 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 				continue;
 
 			float OperatorValue = OperatorMap[i][j];
-			OperatorValue = FMath::Pow(OperatorValue, Level.Power);
 			OperatorValue = FMath::Lerp(Level.AmplitudeLeft, Level.AmplitudeRight, OperatorValue);
 			OperatorValue = Level.Invert ? 1.0f - OperatorValue : OperatorValue;
 
@@ -133,7 +135,7 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 					Map[i][j] = OperatorValue;
 				break;
 			case EApplyMode::Lerp:
-				Map[i][j] = FMath::Lerp(Map[i][j], OperatorValue, Level.Power);
+				Map[i][j] = FMath::Lerp(Map[i][j], OperatorValue, 0.5f);
 				break;
 			case EApplyMode::Multiply:
 				Map[i][j] *= OperatorValue;
@@ -158,7 +160,7 @@ void FDepthMapGenerator::ApplyPerlinLevel(const FDepthLevelConfig& Level)
 			float N = (FMath::PerlinNoise2D(FVector2D(
 				i * Level.ScaleX * SCALE_X_BASE + XShift,
 				j * Level.ScaleY * SCALE_Y_BASE + YShift)) + 1.0f) * 0.5f;
-			OperatorMap[j][i] = FMath::Clamp(N, 0.0f, 1.0f);
+			OperatorMap[j][i] = FMath::Pow(FMath::Clamp(N, 0.0f, 1.0f), Level.PerlinPower);
 		}
 	}
 }
@@ -189,7 +191,7 @@ void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
 				if (V >= 0.0f && V <= 1.0f && V >= Value)
 					Value = V;
 			}
-			OperatorMap[j][i] = Value;
+			OperatorMap[j][i] = FMath::Pow(Value, Level.EuclideanPower);
 		}
 	}
 }
@@ -204,3 +206,45 @@ void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level)
 	}
 }
 
+// ai generated
+void FDepthMapGenerator::ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level)
+{
+	float XShift, YShift;
+ 	ShiftsFromSeed(Level.Seed, XShift, YShift);
+
+	OperatorMap.SetNum(Height);
+	for (int32 j = 0; j < Height; j++)
+	{
+		OperatorMap[j].SetNum(Width);
+		for (int32 i = 0; i < Width; i++)
+		{
+			float N = (FMath::PerlinNoise2D(FVector2D(
+				i * Level.ScaleX * SCALE_X_BASE + XShift,
+				j * Level.ScaleY * SCALE_Y_BASE + YShift)) + 1.0f) * 0.5f;
+			float PerlinValue = FMath::Clamp(N, 0.0f, 1.0f);
+
+			float EuclideanValue = 0.0f;
+			for (const FEuclideanPoint& Point : Level.Points)
+			{
+				if (!Point.bEnabled) continue;
+				int32 PosX = FMath::RoundToInt(Point.X * Width);
+				int32 PosY = FMath::RoundToInt(Point.Y * Height);
+				float Distance = HexCellDistance(i, j, PosX, PosY, 1.0f);
+				
+				if (Distance < Point.Radius) {
+					EuclideanValue = 1.0f;
+					break;
+				}
+
+				float V = 1.0f / ((Distance - Point.Radius) * (Distance - Point.Radius) + 1.0f);
+				if (V >= 0.0f && V <= 1.0f && V >= EuclideanValue)
+					EuclideanValue = V;
+			}
+
+
+			PerlinValue = FMath::Pow(PerlinValue, Level.PerlinPower);
+			EuclideanValue = FMath::Pow(EuclideanValue, Level.EuclideanPower);
+			OperatorMap[j][i] = PerlinValue * EuclideanValue;
+		}
+	}
+}

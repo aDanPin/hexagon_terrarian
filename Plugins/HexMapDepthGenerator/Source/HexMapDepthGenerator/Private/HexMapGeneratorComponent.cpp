@@ -252,6 +252,9 @@ void UHexMapGeneratorComponent::InitMapShader(AActor* Anchor, const TArray<TArra
 	Viz->Material = Visualization.ShaderMaterial;
 	Viz->HexRadius = FieldMetadata.HexRadius;
 	Viz->HexRotation = FieldMetadata.HexRotation;
+	Viz->WaterLevel = Settings.WaterLevel;
+	Viz->WaterColor = Settings.WaterColor;
+	Viz->LandColor = Settings.LandColor;
 	Viz->MapWidth = FieldMetadata.MapWidth;
 	Viz->MapHeight = FieldMetadata.MapHeight;
 	Viz->Origin = Anchor->GetActorLocation();

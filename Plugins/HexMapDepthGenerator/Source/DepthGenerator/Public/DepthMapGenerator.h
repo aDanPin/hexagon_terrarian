@@ -25,5 +25,6 @@ private:
 	void ApplyPerlinLevel(const FDepthLevelConfig& Level);
 	void ApplyEuclideanLevel(const FDepthLevelConfig& Level);
 	void ApplyValueLayer(const FDepthLevelConfig& Level);
+	void ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level);
 	static void ShiftsFromSeed(int32 Seed, float& OutX, float& OutY);
 };

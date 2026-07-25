@@ -1,6 +1,6 @@
 // Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
 // Material Custom:
-//   float4 Result = HexCellViz_Shade(WorldPos, HexCells, HexCellsSampler, HexRadius, HexRotation, HexMaxDepth, HexMapWidth, HexMapHeight, HexOrigin);
+//   float4 Result = HexCellViz_Shade(WorldPos, HexCells, HexCellsSampler, HexRadius, HexRotation, HexWaterLevel, HexMaxDepth, HexWaterColor.rgb, HexLandColor.rgb, HexMapWidth, HexMapHeight, HexOrigin);
 //   Mask = Result.a;
 //   return Result.rgb;
 

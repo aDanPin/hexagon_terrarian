@@ -22,6 +22,12 @@ struct DATASTRUCTURES_API FHexMapGeneratorSettings
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	int32 WaterLevel = 0;
 
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	FLinearColor WaterColor = FLinearColor(0.05f, 0.15f, 0.45f);
+
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
+	FLinearColor LandColor = FLinearColor(0.15f, 0.65f, 0.35f);
+
 	UPROPERTY()
 	float heightOffset = 0.0f;
 

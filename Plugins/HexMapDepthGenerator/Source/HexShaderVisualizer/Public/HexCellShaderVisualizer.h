@@ -28,7 +28,16 @@ public:
 	FName HexRotationParam = TEXT("HexRotation");
 
 	UPROPERTY(EditAnywhere, Category="Hex Shader")
+	FName HexWaterLevelParam = TEXT("HexWaterLevel");
+
+	UPROPERTY(EditAnywhere, Category="Hex Shader")
 	FName HexMaxDepthParam = TEXT("HexMaxDepth");
+
+	UPROPERTY(EditAnywhere, Category="Hex Shader")
+	FName HexWaterColorParam = TEXT("HexWaterColor");
+
+	UPROPERTY(EditAnywhere, Category="Hex Shader")
+	FName HexLandColorParam = TEXT("HexLandColor");
 
 	UPROPERTY(EditAnywhere, Category="Hex Shader")
 	FName HexMapWidthParam = TEXT("HexMapWidth");
@@ -44,6 +53,15 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Hex Shader")
 	float HexRotation = 0.f;
+
+	UPROPERTY(EditAnywhere, Category="Hex Shader")
+	int32 WaterLevel = 0;
+
+	UPROPERTY(EditAnywhere, Category="Hex Shader")
+	FLinearColor WaterColor = FLinearColor(0.05f, 0.15f, 0.45f);
+
+	UPROPERTY(EditAnywhere, Category="Hex Shader")
+	FLinearColor LandColor = FLinearColor(0.15f, 0.65f, 0.35f);
 
 	UPROPERTY(EditAnywhere, Category="Hex Shader")
 	int32 MapWidth = 1;

@@ -30,3 +30,14 @@ TArray<TArray<int32>> FHexMapManager::BuildDepthMap(int32 LevelsCount) const
 	ApplySeeds(GlobalSeed, Generator.GenerationLevels);
 	return Generator.GetQuantizeMap();
 }
+
+TArray<TArray<int32>> FHexMapManager::BuildDepthMapParallel(int32 LevelsCount) const
+{
+	FDepthMapGenerator Generator;
+	Generator.Width = Metadata.MapWidth;
+	Generator.Height = Metadata.MapHeight;
+	Generator.LevelsCount = LevelsCount;
+	Generator.GenerationLevels = GenerationLevels;
+	ApplySeeds(GlobalSeed, Generator.GenerationLevels);
+	return Generator.GetQuantizeMapParallel();
+}

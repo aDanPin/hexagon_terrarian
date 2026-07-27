@@ -9,6 +9,8 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInterface.h"
+#include "HAL/PlatformMisc.h"
+#include "Async/TaskGraphInterfaces.h"
 
 UHexMapGeneratorComponent::UHexMapGeneratorComponent()
 {
@@ -61,6 +63,51 @@ void UHexMapGeneratorComponent::Regenerate()
 	if (!HasAnyMesh()) return;
 
 
+}
+
+// ai generated
+void UHexMapGeneratorComponent::NativeValueGenerationTest()
+{
+	FHexMapManager LocalManager;
+	LocalManager.SetMetadata(FieldMetadata);
+	LocalManager.SetSettings(0, Settings.GenerationLevels);
+	const int32 LevelCount = FMath::Max(1, Settings.DepthLevelCount);
+
+	const double Start = FPlatformTime::Seconds();
+	for (int32 i = 0; i < 10000; i++)
+	{
+		LocalManager.SetSettings(i, Settings.GenerationLevels);
+		LocalManager.BuildDepthMap(LevelCount);
+	}
+	const double End = FPlatformTime::Seconds();
+
+	UE_LOG(LogTemp, Display, TEXT("Native Value Generation Test: %.3f ms for 10.000 iterations"), (End - Start) * 1000.0);
+}
+
+// ai generated
+void UHexMapGeneratorComponent::ParallelValueGenerationTest()
+{
+	int32 NumCores = FPlatformMisc::NumberOfCores();
+	int32 NumCoresIncludingHyperthreads = FPlatformMisc::NumberOfCoresIncludingHyperthreads();
+	UE_LOG(LogTemp, Display, TEXT("Number of cores: %d, Number of cores including hyperthreads: %d"), NumCores, NumCoresIncludingHyperthreads);
+
+	int32 NumWorkers = FTaskGraphInterface::Get().GetNumWorkerThreads();
+	UE_LOG(LogTemp, Display, TEXT("Number of workers: %d"), NumWorkers);
+
+	FHexMapManager LocalManager;
+	LocalManager.SetMetadata(FieldMetadata);
+	LocalManager.SetSettings(0, Settings.GenerationLevels);
+	const int32 LevelCount = FMath::Max(1, Settings.DepthLevelCount);
+
+	const double Start = FPlatformTime::Seconds();
+	for (int32 i = 0; i < 10000; i++)
+	{
+		LocalManager.SetSettings(i, Settings.GenerationLevels);
+		LocalManager.BuildDepthMapParallel(LevelCount);
+	}
+	const double End = FPlatformTime::Seconds();
+
+	UE_LOG(LogTemp, Display, TEXT("Parallel Value Generation Test: %.3f ms for 10.000 iterations"), (End - Start) * 1000.0);
 }
 
 // ai generated

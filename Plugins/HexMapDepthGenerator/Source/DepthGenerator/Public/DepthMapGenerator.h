@@ -14,6 +14,7 @@ public:
 	TArray<FDepthLevelConfig> GenerationLevels;
 
 	TArray<TArray<int32>> GetQuantizeMap();
+	TArray<TArray<int32>> GetQuantizeMapParallel();
 	static int32 QuantizeDepth(float Value, int32 InLevelsCount);
 
 private:

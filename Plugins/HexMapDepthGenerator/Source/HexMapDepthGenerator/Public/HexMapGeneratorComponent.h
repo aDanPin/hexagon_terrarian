@@ -46,6 +46,12 @@ public:
 	UFUNCTION(CallInEditor, Category="Hex Map Generator")
 	void LoadPreset();
 
+	UFUNCTION(CallInEditor, Category="Hex Map Generator")
+	void NativeValueGenerationTest();
+
+	UFUNCTION(CallInEditor, Category="Hex Map Generator")
+	void ParallelValueGenerationTest();
+
 	UFUNCTION(BlueprintCallable, Category="Hex Map Generator")
 	TArray<FHexCellInfo> GetHexCells() const;
 

@@ -13,13 +13,16 @@ public:
 	int32 LevelsCount = 5;
 	TArray<FDepthLevelConfig> GenerationLevels;
 
-	TArray<TArray<int32>> GetQuantizeMap();
-	TArray<TArray<int32>> GetQuantizeMapParallel();
+	TArray<int32> GetQuantizeMap();
+	TArray<int32> GetQuantizeMapParallel();
 	static int32 QuantizeDepth(float Value, int32 InLevelsCount);
 
 private:
-	TArray<TArray<float>> Map;
-	TArray<TArray<float>> OperatorMap;
+	TArray<float> Map;
+	TArray<float> OperatorMap;
+
+	int32 NumThreads;
+	int32 IterationsPerThread;
 
 	void ApplyNoiseLevel(int32 Index);
 	void ApplyOperatorMap(const FDepthLevelConfig& Level);

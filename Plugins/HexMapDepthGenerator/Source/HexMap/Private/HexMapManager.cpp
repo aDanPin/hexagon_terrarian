@@ -20,7 +20,7 @@ void FHexMapManager::ApplySeeds(int32 InGlobalSeed, TArray<FDepthLevelConfig>& I
 }
 
 // ai generated
-TArray<TArray<int32>> FHexMapManager::BuildDepthMap(int32 LevelsCount) const
+TArray<int32> FHexMapManager::BuildDepthMap(int32 LevelsCount) const
 {
 	FDepthMapGenerator Generator;
 	Generator.Width = Metadata.MapWidth;
@@ -31,7 +31,7 @@ TArray<TArray<int32>> FHexMapManager::BuildDepthMap(int32 LevelsCount) const
 	return Generator.GetQuantizeMap();
 }
 
-TArray<TArray<int32>> FHexMapManager::BuildDepthMapParallel(int32 LevelsCount) const
+TArray<int32> FHexMapManager::BuildDepthMapParallel(int32 LevelsCount) const
 {
 	FDepthMapGenerator Generator;
 	Generator.Width = Metadata.MapWidth;

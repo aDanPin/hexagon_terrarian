@@ -64,13 +64,13 @@ private:
 	FHexMapManager Manager;
 
 	bool HasAnyMesh() const;
-	void InitMap(AActor* Anchor, const TArray<TArray<int32>>& DepthMap, const TArray<UStaticMesh*>& DepthMeshes);
-	void InitMapShader(AActor* Anchor, const TArray<TArray<int32>>& DepthMap);
+	void InitMap(AActor* Anchor, const TArray<int32>& DepthMap, const TArray<UStaticMesh*>& DepthMeshes);
+	void InitMapShader(AActor* Anchor, const TArray<int32>& DepthMap);
 	void ClearHISM(AActor* Anchor) const;
 	void ClearShaderVisualizer(AActor* Anchor) const;
 	void ClearDebugGrid(AActor* Anchor) const;
-	void DrawDebugGrid(AActor* Anchor, const TArray<TArray<int32>>& DepthMap) const;
-	FVector GetHexCellWorldLocation(const FVector& Origin, const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const;
-	static int32 PickMeshIndex(const TArray<TArray<int32>>& DepthMap, int32 MeshCount, int32 Beta, int32 Alpha);
-	float GetHeightOffset(const TArray<TArray<int32>>& DepthMap, int32 Beta, int32 Alpha) const;
+	void DrawDebugGrid(AActor* Anchor, const TArray<int32>& DepthMap) const;
+	FVector GetHexCellWorldLocation(const FVector& Origin, const TArray<int32>& DepthMap, int32 Beta, int32 Alpha) const;
+	static int32 PickMeshIndex(const TArray<int32>& DepthMap, int32 MapWidth, int32 MeshCount, int32 Beta, int32 Alpha);
+	float GetHeightOffset(const TArray<int32>& DepthMap, int32 Beta, int32 Alpha) const;
 };

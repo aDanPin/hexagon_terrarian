@@ -34,57 +34,48 @@ namespace
 }
 
 // ai generated
-TArray<TArray<int32>> FDepthMapGenerator::GetQuantizeMap()
+TArray<int32> FDepthMapGenerator::GetQuantizeMap()
 {
 	if (GenerationLevels.Num() == 0)
 		GenerationLevels.Add(FDepthLevelConfig());
 
-	Map.SetNum(Height);
-	for (int32 j = 0; j < Height; j++)
-		Map[j].Init(0.0f, Width);
+	Map.SetNum(Height * Width);
+	OperatorMap.SetNum(Height * Width);
+	NumThreads = FMath::Max(1, FTaskGraphInterface::Get().GetNumWorkerThreads());
+	IterationsPerThread = FMath::Max(1, Height / NumThreads);
 
 	for (int32 i = 0; i < GenerationLevels.Num(); i++)
 		if (GenerationLevels[i].bEnabled) ApplyNoiseLevel(i);
 
 	int32 Levels = FMath::Max(1, LevelsCount);
-	TArray<TArray<int32>> Quantized;
-	Quantized.SetNum(Height);
+	TArray<int32> Quantized;
+	Quantized.SetNum(Height * Width);
 	for (int32 i = 0; i < Height; i++)
 	{
-		Quantized[i].SetNum(Width);
 		for (int32 j = 0; j < Width; j++)
-			Quantized[i][j] = QuantizeDepth(Map[i][j], Levels);
+			Quantized[i * Width + j] = QuantizeDepth(Map[i * Width + j], Levels);
 	}
 	return Quantized;
 }
 
-TArray<TArray<int32>> FDepthMapGenerator::GetQuantizeMapParallel()
+TArray<int32> FDepthMapGenerator::GetQuantizeMapParallel()
 {
-	int32 NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
-	int32 IterationsPerThread = Height / NumThreads;
+	NumThreads = FMath::Max(1, FTaskGraphInterface::Get().GetNumWorkerThreads());
+	IterationsPerThread = FMath::Max(1, Height / NumThreads);
 
 	if (GenerationLevels.Num() == 0)
 		GenerationLevels.Add(FDepthLevelConfig());
 
-	Map.SetNum(Height);
-
-	ParallelFor(NumThreads, [&](int32 Index)
-	{
-		int32 StartIDX = Index * IterationsPerThread;
-		int32 EndIDX = FMath::Min(StartIDX + IterationsPerThread, Height);
-		for (int32 I = StartIDX; I < EndIDX; I++)
-		{
-			Map[I].Init(0.0f, Width);
-		}
-	});
+	Map.SetNum(Height * Width);
+	OperatorMap.SetNum(Height * Width);
 
 	for (int32 i = 0; i < GenerationLevels.Num(); i++) {
 		if (GenerationLevels[i].bEnabled) ApplyNoiseLevel(i);
 	}
 
 	int32 Levels = FMath::Max(1, LevelsCount);
-	TArray<TArray<int32>> Quantized;
-	Quantized.SetNum(Height);
+	TArray<int32> Quantized;
+	Quantized.SetNum(Height * Width);
 
 	ParallelFor(NumThreads, [&](int32 Index)
 	{
@@ -92,14 +83,12 @@ TArray<TArray<int32>> FDepthMapGenerator::GetQuantizeMapParallel()
 		int32 EndIDX = FMath::Min(StartIDX + IterationsPerThread, Height);
 		for (int32 i = StartIDX; i < EndIDX; i++)
 		{
-			Quantized[i].SetNum(Width);
 			for (int32 j = 0; j < Width; j++)
-				Quantized[i][j] = QuantizeDepth(Map[i][j], Levels);
+				Quantized[i * Width + j] = QuantizeDepth(Map[i * Width + j], Levels);
 		}
 	});
 	return Quantized;
 }
-
 
 // ai generated
 int32 FDepthMapGenerator::QuantizeDepth(float Value, int32 InLevelsCount)
@@ -125,10 +114,6 @@ void FDepthMapGenerator::ApplyNoiseLevel(int32 Index)
 {
 	const FDepthLevelConfig& Level = GenerationLevels[Index];
 
-	OperatorMap.SetNum(Height);
-	for (int32 j = 0; j < Height; j++)
-		OperatorMap[j].Init(0.0f, Width);
-
 	switch (Level.Type)
 	{
 	case ENoiseLayerType::Perlin:
@@ -153,8 +138,8 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 {
 	if (OperatorMap.Num() == 0) return;
 
-	int32 NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
-	int32 IterationsPerThread = Height / NumThreads;
+	NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
+	IterationsPerThread = Height / NumThreads;
 
 	ParallelFor(NumThreads, [&](int32 Index)
 	{
@@ -164,37 +149,37 @@ void FDepthMapGenerator::ApplyOperatorMap(const FDepthLevelConfig& Level)
 		{
 			for (int32 j = 0; j < Width; j++)
 			{
-				if (Map[i][j] < Level.ApplyWindowLeft || Map[i][j] > Level.ApplyWindowRight)
+				if (Map[i * Width + j] < Level.ApplyWindowLeft || Map[i * Width + j] > Level.ApplyWindowRight)
 					continue;
 	
-				float OperatorValue = OperatorMap[i][j];
+				float OperatorValue = OperatorMap[i * Width + j];
 				OperatorValue = FMath::Lerp(Level.AmplitudeLeft, Level.AmplitudeRight, OperatorValue);
 				OperatorValue = Level.Invert ? 1.0f - OperatorValue : OperatorValue;
 	
 				switch (Level.ApplyMode)
 				{
 				case EApplyMode::Add:
-					Map[i][j] += OperatorValue;
+					Map[i * Width + j] += OperatorValue;
 					break;
 				case EApplyMode::Subtract:
-					Map[i][j] -= OperatorValue;
+					Map[i * Width + j] -= OperatorValue;
 					break;
 				case EApplyMode::Replace:
-					Map[i][j] = OperatorValue;
+					Map[i * Width + j] = OperatorValue;
 					break;
 				case EApplyMode::ReplaceIfAbove:
-					if (Map[i][j] < OperatorValue)
-						Map[i][j] = OperatorValue;
+					if (Map[i * Width + j] < OperatorValue)
+						Map[i * Width + j] = OperatorValue;
 					break;
 				case EApplyMode::ReplaceIfBelow:
-					if (Map[i][j] > OperatorValue)
-						Map[i][j] = OperatorValue;
+					if (Map[i * Width + j] > OperatorValue)
+						Map[i * Width + j] = OperatorValue;
 					break;
 				case EApplyMode::Lerp:
-					Map[i][j] = FMath::Lerp(Map[i][j], OperatorValue, 0.5f);
+					Map[i * Width + j] = FMath::Lerp(Map[i * Width + j], OperatorValue, 0.5f);
 					break;
 				case EApplyMode::Multiply:
-					Map[i][j] *= OperatorValue;
+					Map[i * Width + j] *= OperatorValue;
 					break;
 				}
 			}
@@ -209,23 +194,18 @@ void FDepthMapGenerator::ApplyPerlinLevel(const FDepthLevelConfig& Level)
 	float XShift, YShift;
 	ShiftsFromSeed(Level.Seed, XShift, YShift);
 
-
-	int32 NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
-	int32 IterationsPerThread = Height / NumThreads;
-
 	ParallelFor(NumThreads, [&](int32 Index)
 	{
 		int32 StartIDX = Index * IterationsPerThread;
 		int32 EndIDX = FMath::Min(StartIDX + IterationsPerThread, Height);
 		for (int32 j = StartIDX; j < EndIDX; j++)
 		{
-			OperatorMap[j].SetNum(Width);
 			for (int32 i = 0; i < Width; i++)
 			{
 				float N = (FMath::PerlinNoise2D(FVector2D(
 					i * Level.ScaleX * SCALE_X_BASE + XShift,
 					j * Level.ScaleY * SCALE_Y_BASE + YShift)) + 1.0f) * 0.5f;
-				OperatorMap[j][i] = FMath::Pow(FMath::Clamp(N, 0.0f, 1.0f), Level.PerlinPower);
+				OperatorMap[j * Width + i] = FMath::Pow(FMath::Clamp(N, 0.0f, 1.0f), Level.PerlinPower);
 			}
 		}
 	});
@@ -235,8 +215,8 @@ void FDepthMapGenerator::ApplyPerlinLevel(const FDepthLevelConfig& Level)
 void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
 {
 	
-	int32 NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
-	int32 IterationsPerThread = Height / NumThreads;
+	NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
+	IterationsPerThread = Height / NumThreads;
 
 	ParallelFor(NumThreads, [&](int32 Index)
 	{
@@ -244,7 +224,6 @@ void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
 		int32 EndIDX = FMath::Min(StartIDX + IterationsPerThread, Height);
 		for (int32 j = StartIDX; j < EndIDX; j++)
 		{
-			OperatorMap[j].SetNum(Width);
 			for (int32 i = 0; i < Width; i++)
 			{
 				float Value = 0.0f;
@@ -264,7 +243,7 @@ void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
 					if (V >= 0.0f && V <= 1.0f && V >= Value)
 						Value = V;
 				}
-				OperatorMap[j][i] = FMath::Pow(Value, Level.EuclideanPower);
+				OperatorMap[j * Width + i] = FMath::Pow(Value, Level.EuclideanPower);
 			}
 		}
 	});
@@ -273,8 +252,8 @@ void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
 // ai generated
 void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level)
 {
-	int32 NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
-	int32 IterationsPerThread = Height / NumThreads;
+	NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
+	IterationsPerThread = Height / NumThreads;
 
 	ParallelFor(NumThreads, [&](int32 Index)
 	{
@@ -282,7 +261,10 @@ void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level)
 		int32 EndIDX = FMath::Min(StartIDX + IterationsPerThread, Height);
 		for (int32 j = StartIDX; j < EndIDX; j++)
 		{
-			OperatorMap[j].Init(Level.Value, Width);
+			for (int32 i = 0; i < Width; i++)
+			{
+				OperatorMap[j * Width + i] = Level.Value;
+			}
 		}
 	});
 }
@@ -293,8 +275,8 @@ void FDepthMapGenerator::ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Leve
 	float XShift, YShift;
  	ShiftsFromSeed(Level.Seed, XShift, YShift);
 
-	int32 NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
-	int32 IterationsPerThread = Height / NumThreads;
+	NumThreads = FTaskGraphInterface::Get().GetNumWorkerThreads();
+	IterationsPerThread = Height / NumThreads;
  
 	ParallelFor(NumThreads, [&](int32 Index)
 	{
@@ -302,7 +284,6 @@ void FDepthMapGenerator::ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Leve
 		 int32 EndIDX = FMath::Min(StartIDX + IterationsPerThread, Height);
 		 for (int32 j = StartIDX; j < EndIDX; j++)
 		 {
-			 OperatorMap[j].SetNum(Width);
 			 for (int32 i = 0; i < Width; i++)
 			 {
 				 float N = (FMath::PerlinNoise2D(FVector2D(
@@ -331,7 +312,7 @@ void FDepthMapGenerator::ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Leve
 	 
 				 PerlinValue = FMath::Pow(PerlinValue, Level.PerlinPower);
 				 EuclideanValue = FMath::Pow(EuclideanValue, Level.EuclideanPower);
-				 OperatorMap[j][i] = PerlinValue * EuclideanValue;
+				 OperatorMap[j * Width + i] = PerlinValue * EuclideanValue;
 			 }
 		 }
 	});

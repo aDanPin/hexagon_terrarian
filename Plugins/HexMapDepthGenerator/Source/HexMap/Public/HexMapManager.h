@@ -13,8 +13,8 @@ public:
 	void SetSettings(int32 InGlobalSeed, const TArray<FDepthLevelConfig>& InGenerationLevels);
 	const FHexFieldMetadata& GetActualMetadata() const { return Metadata; }
 
-	TArray<TArray<int32>> BuildDepthMap(int32 LevelsCount) const;
-	TArray<TArray<int32>> BuildDepthMapParallel(int32 LevelsCount) const;
+	TArray<int32> BuildDepthMap(int32 LevelsCount) const;
+	TArray<int32> BuildDepthMapParallel(int32 LevelsCount) const;
 
 	void NativeValueGenerationTest();
 	void ParallelValueGenerationTest();

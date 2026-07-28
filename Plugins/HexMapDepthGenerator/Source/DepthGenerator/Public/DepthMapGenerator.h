@@ -21,12 +21,11 @@ private:
 	TArray<float> Map;
 
 	void PrepareMap();
-	void ParallelRows(TFunctionRef<void(int32 StartRow, int32 EndRow)> Body) const;
-	void ApplyNoiseLevel(int32 Index);
-	void ApplyRow(const FDepthLevelConfig& Level, int32 Row, const float* Values);
-	void ApplyPerlinLevel(const FDepthLevelConfig& Level);
-	void ApplyEuclideanLevel(const FDepthLevelConfig& Level);
-	void ApplyValueLayer(const FDepthLevelConfig& Level);
-	void ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level);
+	inline float Apply(const FDepthLevelConfig& Level, float LeftValue, float RightValue);
+	void ApplyNoiseLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
+	void ApplyPerlinLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
+	void ApplyEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
+	void ApplyValueLayer(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
+	void ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
 	static void ShiftsFromSeed(int32 Seed, float& OutX, float& OutY);
 };

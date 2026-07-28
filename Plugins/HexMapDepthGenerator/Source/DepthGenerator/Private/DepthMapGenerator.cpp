@@ -34,19 +34,6 @@ namespace
 }
 
 // ai generated
-void FDepthMapGenerator::ParallelRows(TFunctionRef<void(int32 StartRow, int32 EndRow)> Body) const
-{
-	const int32 NumThreads = FMath::Max(1, FTaskGraphInterface::Get().GetNumWorkerThreads() + 1);
-	const int32 RowsPerChunk = FMath::DivideAndRoundUp(Height, NumThreads);
-	if (RowsPerChunk <= 0) return;
-
-	ParallelFor(FMath::DivideAndRoundUp(Height, RowsPerChunk), [&](int32 Chunk)
-	{
-		Body(Chunk * RowsPerChunk, FMath::Min((Chunk + 1) * RowsPerChunk, Height));
-	});
-}
-
-// ai generated
 TArray<int32> FDepthMapGenerator::GetQuantizeMap()
 {
 	if (GenerationLevels.Num() == 0)
@@ -55,8 +42,8 @@ TArray<int32> FDepthMapGenerator::GetQuantizeMap()
 	Map.Reset();
 	Map.SetNumZeroed(Height * Width);
 
-	for (int32 i = 0; i < GenerationLevels.Num(); i++)
-		if (GenerationLevels[i].bEnabled) ApplyNoiseLevel(i);
+	// for (int32 i = 0; i < GenerationLevels.Num(); i++)
+		//if (GenerationLevels[i].bEnabled) ApplyNoiseLevel(i);
 
 	const int32 Levels = FMath::Max(1, LevelsCount);
 	TArray<int32> Quantized;
@@ -72,23 +59,23 @@ TArray<int32> FDepthMapGenerator::GetQuantizeMapParallel()
 	if (GenerationLevels.Num() == 0)
 		GenerationLevels.Add(FDepthLevelConfig());
 
-	Map.Reset();
-	Map.SetNumZeroed(Height * Width);
 	TArray<int32> Quantized;
 	Quantized.SetNumUninitialized(Height * Width);
+	Map.Reset();
+	Map.SetNumZeroed(Height * Width);
+	
 	const int32 Levels = FMath::Max(1, LevelsCount);
 	const int32 W = Width;
 
-	for (int32 i = 0; i < GenerationLevels.Num(); i++)
-		if (GenerationLevels[i].bEnabled) ApplyNoiseLevel(i);
-
-	ParallelRows([&](int32 StartRow, int32 EndRow)
-	{
-		const float* RESTRICT Src = Map.GetData() + StartRow * W;
-		int32* RESTRICT Dst = Quantized.GetData() + StartRow * W;
-		for (int32 i = 0, Num = (EndRow - StartRow) * W; i < Num; i++)
-			Dst[i] = QuantizeDepth(Src[i], Levels);
+	ParallelFor(Height, [&, Levels, W](int32 index) {
+		float* RESTRICT Src = Map.GetData() + index * W;
+		int32* RESTRICT Dst = Quantized.GetData() + index * W;
+		
+		for (int32 i = 0; i < GenerationLevels.Num(); i++) {
+			if (GenerationLevels[i].bEnabled) ApplyNoiseLevel(GenerationLevels[i], index, Src, Dst);
+		}
 	});
+
 	return Quantized;
 }
 
@@ -112,198 +99,152 @@ void FDepthMapGenerator::ShiftsFromSeed(int32 Seed, float& OutX, float& OutY)
 }
 
 // ai generated
-void FDepthMapGenerator::ApplyNoiseLevel(int32 Index)
+inline void FDepthMapGenerator::ApplyNoiseLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
 {
-	const FDepthLevelConfig& Level = GenerationLevels[Index];
-
 	switch (Level.Type)
 	{
 	case ENoiseLayerType::Perlin:
-		ApplyPerlinLevel(Level);
+		ApplyPerlinLevel(Level, Row, Src, Dst);
 		break;
 	case ENoiseLayerType::Euclidean:
-		ApplyEuclideanLevel(Level);
+		ApplyEuclideanLevel(Level, Row, Src, Dst);
 		break;
 	case ENoiseLayerType::Value:
-		ApplyValueLayer(Level);
+		ApplyValueLayer(Level, Row, Src, Dst);
 		break;
 	case ENoiseLayerType::PerlinEuclidean:
-		ApplyPerlinEuclideanLevel(Level);
+		ApplyPerlinEuclideanLevel(Level, Row, Src, Dst);
 		break;
 	}
 }
 
-// ai generated
-void FDepthMapGenerator::ApplyRow(const FDepthLevelConfig& Level, int32 Row, const float* Values)
+inline float FDepthMapGenerator::Apply(const FDepthLevelConfig& Level, float LeftValue, float RightValue)
 {
-	const int32 W = Width;
-	const float WinL = Level.ApplyWindowLeft;
-	const float WinR = Level.ApplyWindowRight;
-	// Lerp(AmplitudeLeft, AmplitudeRight, V) with Invert folded in
-	const float Base = Level.Invert ? 1.0f - Level.AmplitudeLeft : Level.AmplitudeLeft;
-	const float Delta = Level.Invert ? Level.AmplitudeLeft - Level.AmplitudeRight : Level.AmplitudeRight - Level.AmplitudeLeft;
-	float* RESTRICT M = Map.GetData() + Row * W;
+	if (LeftValue < Level.ApplyWindowLeft || LeftValue > Level.ApplyWindowRight)
+		return LeftValue;
 
-	const auto Run = [&](auto Op)
-	{
-		for (int32 j = 0; j < W; j++)
-		{
-			const float D = M[j];
-			if (D < WinL || D > WinR) continue;
-			M[j] = Op(D, Base + Delta * Values[j]);
-		}
-	};
+	float OperatorValue = FMath::Lerp(Level.AmplitudeLeft, Level.AmplitudeRight, RightValue);
+	if (Level.Invert)
+		OperatorValue = 1.0f - OperatorValue;
 
 	switch (Level.ApplyMode)
 	{
-	case EApplyMode::Add:            Run([](float D, float V) { return D + V; }); break;
-	case EApplyMode::Subtract:       Run([](float D, float V) { return D - V; }); break;
-	case EApplyMode::Multiply:       Run([](float D, float V) { return D * V; }); break;
-	case EApplyMode::Lerp:           Run([](float D, float V) { return FMath::Lerp(D, V, 0.5f); }); break;
-	case EApplyMode::Replace:        Run([](float, float V) { return V; }); break;
-	case EApplyMode::ReplaceIfAbove: Run([](float D, float V) { return FMath::Max(D, V); }); break;
-	case EApplyMode::ReplaceIfBelow: Run([](float D, float V) { return FMath::Min(D, V); }); break;
+	case EApplyMode::Add:            return LeftValue + OperatorValue;
+	case EApplyMode::Subtract:       return LeftValue - OperatorValue;
+	case EApplyMode::Multiply:       return LeftValue * OperatorValue;
+	case EApplyMode::Lerp:           return FMath::Lerp(LeftValue, OperatorValue, 0.5f);
+	case EApplyMode::Replace:        return OperatorValue;
+	case EApplyMode::ReplaceIfAbove: return FMath::Max(LeftValue, OperatorValue);
+	case EApplyMode::ReplaceIfBelow: return FMath::Min(LeftValue, OperatorValue);
+	}
+	return LeftValue;
+}
+
+// ai generated
+void FDepthMapGenerator::ApplyPerlinLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
+{
+	float XShift, YShift;
+	ShiftsFromSeed(Level.Seed, XShift, YShift);
+	const float StepX = Level.ScaleX * SCALE_X_BASE;
+	const float StepY = Level.ScaleY * SCALE_Y_BASE;
+	const float Y = Row * StepY + YShift;
+
+	auto is = Src;
+	auto id = Dst;
+	for (int32 Col = 0; is < Src + Width; is++, id++, Col++)
+	{
+		const float N = (FMath::PerlinNoise2D(FVector2D(Col * StepX + XShift, Y)) + 1.0f) * 0.5f;
+		const float PerlinValue = FMath::Pow(FMath::Clamp(N, 0.0f, 1.0f), Level.PerlinPower);
+		const float Value = Apply(Level, *is, PerlinValue);
+		*is = Value;
+		*id = QuantizeDepth(Value, FMath::Max(1, LevelsCount));
 	}
 }
 
 // ai generated
-void FDepthMapGenerator::ApplyPerlinLevel(const FDepthLevelConfig& Level)
+void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
+{
+	auto is = Src;
+	auto id = Dst;
+	for (int32 Col = 0; is < Src + Width; is++, id++, Col++)
+	{
+		float Value = 0.0f;
+		for (const FEuclideanPoint& Point : Level.Points)
+		{
+			if (!Point.bEnabled) continue;
+			const int32 PosX = FMath::RoundToInt(Point.X * Width);
+			const int32 PosY = FMath::RoundToInt(Point.Y * Height);
+			const float Distance = HexCellDistance(Col, Row, PosX, PosY, 1.0f);
+
+			if (Distance < Point.Radius)
+			{
+				Value = 1.0f;
+				break;
+			}
+
+			const float V = 1.0f / ((Distance - Point.Radius) * (Distance - Point.Radius) + 1.0f);
+			if (V >= Value)
+				Value = V;
+		}
+		Value = FMath::Pow(Value, Level.EuclideanPower);
+		Value = Apply(Level, *is, Value);
+		*is = Value;
+		*id = QuantizeDepth(Value, FMath::Max(1, LevelsCount));
+	}
+}
+
+// ai generated
+void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
+{
+	auto is = Src;
+	auto id = Dst;
+	for (; is < Src + Width; is++, id++)
+	{
+		const float Value = Apply(Level, *is, Level.Value);
+		*is = Value;
+		*id = QuantizeDepth(Value, FMath::Max(1, LevelsCount));
+	}
+}
+
+// ai generated
+void FDepthMapGenerator::ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
 {
 	float XShift, YShift;
 	ShiftsFromSeed(Level.Seed, XShift, YShift);
-
-	const int32 W = Width;
 	const float StepX = Level.ScaleX * SCALE_X_BASE;
 	const float StepY = Level.ScaleY * SCALE_Y_BASE;
-	const float Power = Level.PerlinPower;
+	const float Y = Row * StepY + YShift;
 
-	ParallelRows([&](int32 StartRow, int32 EndRow)
+	auto is = Src;
+	auto id = Dst;
+	for (int32 Col = 0; is < Src + Width; is++, id++, Col++)
 	{
-		TArray<float> Values;
-		Values.SetNumUninitialized(W);
+		const float N = (FMath::PerlinNoise2D(FVector2D(Col * StepX + XShift, Y)) + 1.0f) * 0.5f;
+		float PerlinValue = FMath::Clamp(N, 0.0f, 1.0f);
 
-		for (int32 j = StartRow; j < EndRow; j++)
+		float EuclideanValue = 0.0f;
+		for (const FEuclideanPoint& Point : Level.Points)
 		{
-			const float Y = j * StepY + YShift;
-			for (int32 i = 0; i < W; i++)
+			if (!Point.bEnabled) continue;
+			const int32 PosX = FMath::RoundToInt(Point.X * Width);
+			const int32 PosY = FMath::RoundToInt(Point.Y * Height);
+			const float Distance = HexCellDistance(Col, Row, PosX, PosY, 1.0f);
+
+			if (Distance < Point.Radius)
 			{
-				const float N = (FMath::PerlinNoise2D(FVector2D(i * StepX + XShift, Y)) + 1.0f) * 0.5f;
-				Values[i] = FMath::Pow(FMath::Clamp(N, 0.0f, 1.0f), Power);
+				EuclideanValue = 1.0f;
+				break;
 			}
-			ApplyRow(Level, j, Values.GetData());
+
+			const float V = 1.0f / ((Distance - Point.Radius) * (Distance - Point.Radius) + 1.0f);
+			if (V >= EuclideanValue)
+				EuclideanValue = V;
 		}
-	});
-}
 
-// ai generated
-void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level)
-{
-	const int32 W = Width;
-	const int32 H = Height;
-	const float Power = Level.EuclideanPower;
-	const TArray<FEuclideanPoint>& Points = Level.Points;
-
-	ParallelRows([&](int32 StartRow, int32 EndRow)
-	{
-		TArray<float> Values;
-		Values.SetNumUninitialized(W);
-
-		for (int32 j = StartRow; j < EndRow; j++)
-		{
-			for (int32 i = 0; i < W; i++)
-			{
-				float Value = 0.0f;
-				for (const FEuclideanPoint& Point : Points)
-				{
-					if (!Point.bEnabled) continue;
-					const int32 PosX = FMath::RoundToInt(Point.X * W);
-					const int32 PosY = FMath::RoundToInt(Point.Y * H);
-					const float Distance = HexCellDistance(i, j, PosX, PosY, 1.0f);
-
-					if (Distance < Point.Radius)
-					{
-						Value = 1.0f;
-						break;
-					}
-
-					const float V = 1.0f / ((Distance - Point.Radius) * (Distance - Point.Radius) + 1.0f);
-					if (V >= Value)
-						Value = V;
-				}
-				Values[i] = FMath::Pow(Value, Power);
-			}
-			ApplyRow(Level, j, Values.GetData());
-		}
-	});
-}
-
-// ai generated
-void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level)
-{
-	const int32 W = Width;
-	const float Value = Level.Value;
-
-	ParallelRows([&](int32 StartRow, int32 EndRow)
-	{
-		TArray<float> Values;
-		Values.Init(Value, W);
-
-		for (int32 j = StartRow; j < EndRow; j++)
-			ApplyRow(Level, j, Values.GetData());
-	});
-}
-
-// ai generated
-void FDepthMapGenerator::ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level)
-{
-	float XShift, YShift;
-	ShiftsFromSeed(Level.Seed, XShift, YShift);
-
-	const int32 W = Width;
-	const int32 H = Height;
-	const float StepX = Level.ScaleX * SCALE_X_BASE;
-	const float StepY = Level.ScaleY * SCALE_Y_BASE;
-	const float PerlinPower = Level.PerlinPower;
-	const float EuclideanPower = Level.EuclideanPower;
-	const TArray<FEuclideanPoint>& Points = Level.Points;
-
-	ParallelRows([&](int32 StartRow, int32 EndRow)
-	{
-		TArray<float> Values;
-		Values.SetNumUninitialized(W);
-
-		for (int32 j = StartRow; j < EndRow; j++)
-		{
-			const float Y = j * StepY + YShift;
-			for (int32 i = 0; i < W; i++)
-			{
-				const float N = (FMath::PerlinNoise2D(FVector2D(i * StepX + XShift, Y)) + 1.0f) * 0.5f;
-				float PerlinValue = FMath::Clamp(N, 0.0f, 1.0f);
-
-				float EuclideanValue = 0.0f;
-				for (const FEuclideanPoint& Point : Points)
-				{
-					if (!Point.bEnabled) continue;
-					const int32 PosX = FMath::RoundToInt(Point.X * W);
-					const int32 PosY = FMath::RoundToInt(Point.Y * H);
-					const float Distance = HexCellDistance(i, j, PosX, PosY, 1.0f);
-
-					if (Distance < Point.Radius)
-					{
-						EuclideanValue = 1.0f;
-						break;
-					}
-
-					const float V = 1.0f / ((Distance - Point.Radius) * (Distance - Point.Radius) + 1.0f);
-					if (V >= EuclideanValue)
-						EuclideanValue = V;
-				}
-
-				PerlinValue = FMath::Pow(PerlinValue, PerlinPower);
-				EuclideanValue = FMath::Pow(EuclideanValue, EuclideanPower);
-				Values[i] = PerlinValue * EuclideanValue;
-			}
-			ApplyRow(Level, j, Values.GetData());
-		}
-	});
+		PerlinValue = FMath::Pow(PerlinValue, Level.PerlinPower);
+		EuclideanValue = FMath::Pow(EuclideanValue, Level.EuclideanPower);
+		const float Value = Apply(Level, *is, PerlinValue * EuclideanValue);
+		*is = Value;
+		*id = QuantizeDepth(Value, FMath::Max(1, LevelsCount));
+	}
 }

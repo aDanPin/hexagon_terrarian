@@ -19,13 +19,11 @@ public:
 
 private:
 	TArray<float> Map;
-	TArray<float> OperatorMap;
 
-	int32 NumThreads;
-	int32 IterationsPerThread;
-
+	void PrepareMap();
+	void ParallelRows(TFunctionRef<void(int32 StartRow, int32 EndRow)> Body) const;
 	void ApplyNoiseLevel(int32 Index);
-	void ApplyOperatorMap(const FDepthLevelConfig& Level);
+	void ApplyRow(const FDepthLevelConfig& Level, int32 Row, const float* Values);
 	void ApplyPerlinLevel(const FDepthLevelConfig& Level);
 	void ApplyEuclideanLevel(const FDepthLevelConfig& Level);
 	void ApplyValueLayer(const FDepthLevelConfig& Level);

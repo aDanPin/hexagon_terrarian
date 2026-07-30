@@ -28,6 +28,12 @@ struct DATASTRUCTURES_API FHexMapGeneratorSettings
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	FLinearColor LandColor = FLinearColor(0.15f, 0.65f, 0.35f);
 
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float LightnessMin = 0.35f;
+
+	UPROPERTY(EditAnywhere, Category="Hex Map Generator", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float LightnessMax = 1.0f;
+
 	UPROPERTY()
 	float heightOffset = 0.0f;
 
@@ -36,8 +42,6 @@ struct DATASTRUCTURES_API FHexMapGeneratorSettings
 
 	UPROPERTY(EditAnywhere, Category="Hex Map Generator")
 	TArray<FDepthLevelConfig> GenerationLevels;
-
-	// ai generated
 	void SyncDepthLevelMeshes()
 	{
 		DepthLevelCount = FMath::Max(1, DepthLevelCount);

@@ -32,8 +32,6 @@ namespace
 		return FMath::Sqrt((PX1 - PX2) * (PX1 - PX2) + (PZ1 - PZ2) * (PZ1 - PZ2)) / (2.0f * HexRadius);
 	}
 }
-
-// ai generated
 TArray<int32> FDepthMapGenerator::GetQuantizeMap()
 {
 	if (GenerationLevels.Num() == 0)
@@ -78,8 +76,6 @@ TArray<int32> FDepthMapGenerator::GetQuantizeMapParallel()
 
 	return Quantized;
 }
-
-// ai generated
 int32 FDepthMapGenerator::QuantizeDepth(float Value, int32 InLevelsCount)
 {
 	for (int32 i = 0; i < InLevelsCount; i++)
@@ -89,16 +85,12 @@ int32 FDepthMapGenerator::QuantizeDepth(float Value, int32 InLevelsCount)
 	}
 	return InLevelsCount;
 }
-
-// ai generated
 void FDepthMapGenerator::ShiftsFromSeed(int32 Seed, float& OutX, float& OutY)
 {
 	FRandomStream Rng(Seed);
 	OutX = Rng.FRand() * 1000.0f;
 	OutY = Rng.FRand() * 1000.0f;
 }
-
-// ai generated
 inline void FDepthMapGenerator::ApplyNoiseLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
 {
 	switch (Level.Type)
@@ -139,8 +131,6 @@ inline float FDepthMapGenerator::Apply(const FDepthLevelConfig& Level, float Lef
 	}
 	return LeftValue;
 }
-
-// ai generated
 void FDepthMapGenerator::ApplyPerlinLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
 {
 	float XShift, YShift;
@@ -160,8 +150,6 @@ void FDepthMapGenerator::ApplyPerlinLevel(const FDepthLevelConfig& Level, int32 
 		*id = QuantizeDepth(Value, FMath::Max(1, LevelsCount));
 	}
 }
-
-// ai generated
 void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
 {
 	auto is = Src;
@@ -192,8 +180,6 @@ void FDepthMapGenerator::ApplyEuclideanLevel(const FDepthLevelConfig& Level, int
 		*id = QuantizeDepth(Value, FMath::Max(1, LevelsCount));
 	}
 }
-
-// ai generated
 void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
 {
 	auto is = Src;
@@ -205,8 +191,6 @@ void FDepthMapGenerator::ApplyValueLayer(const FDepthLevelConfig& Level, int32 R
 		*id = QuantizeDepth(Value, FMath::Max(1, LevelsCount));
 	}
 }
-
-// ai generated
 void FDepthMapGenerator::ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Src, int32* RESTRICT Dst)
 {
 	float XShift, YShift;

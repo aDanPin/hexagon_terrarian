@@ -2,20 +2,14 @@
 // Hex cell depth visualization for UHexCellShaderVisualizer
 // Texture HexCells: MapWidth x MapHeight, .w = depth
 // Local: Lx=Wy-Origin.y (Px), Lz=-(Wx-Origin.x) (Pz)
-
-// ai generated
 float HexCellViz_Px(int A, int B, float R)
 {
 	return 3.0 * R * (float)A + (((B & 1) != 0) ? 1.5 * R : 0.0);
 }
-
-// ai generated
 float HexCellViz_Pz(int A, int B, float R)
 {
 	return -0.866025404 * R * (float)B;
 }
-
-// ai generated
 float HexCellViz_HexSDF(float2 P, float OuterRadius, float RotationDeg)
 {
 	float Rad = radians(-(RotationDeg + 30.0));
@@ -30,18 +24,13 @@ float HexCellViz_HexSDF(float2 P, float OuterRadius, float RotationDeg)
 	Q -= float2(clamp(Q.x, -K.z * R, K.z * R), R);
 	return length(Q) * sign(Q.y);
 }
-
-// ai generated
-float3 HexCellViz_CellColor(float Depth, float WaterLevel, float MaxDepth, float3 WaterColor, float3 LandColor)
+float3 HexCellViz_CellColor(float Depth, float WaterLevel, float MaxDepth, float3 WaterColor, float3 LandColor, float LightnessMin, float LightnessMax)
 {
 	const bool bWater = Depth <= WaterLevel;
 	float3 Base = bWater ? WaterColor : LandColor;
-	float Range = bWater ? max(WaterLevel, 1.0) : max(MaxDepth - WaterLevel, 1.0);
-	float T = bWater ? saturate(Depth / Range) : saturate((Depth - WaterLevel) / Range);
-	return Base * lerp(0.35, 1.0, T);
-}
 
-// ai generated
+	return Base * lerp(LightnessMin, LightnessMax, Depth/ MaxDepth);
+}
 void HexCellViz_NearestAB(float Lx, float Lz, float R, int MapW, int MapH, out int OutA, out int OutB)
 {
 	int BetaGuess = (int)round(-Lz / (0.866025404 * R));
@@ -78,8 +67,6 @@ void HexCellViz_NearestAB(float Lx, float Lz, float R, int MapW, int MapH, out i
 		}
 	}
 }
-
-// ai generated
 float4 HexCellViz_Shade(
 	float3 WorldPos,
 	Texture2D CellsTex,
@@ -90,6 +77,8 @@ float4 HexCellViz_Shade(
 	float MaxDepth,
 	float3 WaterColor,
 	float3 LandColor,
+	float LightnessMin,
+	float LightnessMax,
 	float MapWidth,
 	float MapHeight,
 	float3 Origin)
@@ -114,8 +103,8 @@ float4 HexCellViz_Shade(
 	float2 UV = float2(((float)A + 0.5) / (float)MapW, ((float)B + 0.5) / (float)MapH);
 	float Depth = CellsTex.SampleLevel(CellsSampler, UV, 0).w;
 
-	float3 Color = HexCellViz_CellColor(Depth, WaterLevel, MaxDepth, WaterColor, LandColor);
-	float Edge = smoothstep(0.0, HexRadius * 0.08, -Sdf);
-	Color *= lerp(0.25, 1.0, Edge);
+	float3 Color = HexCellViz_CellColor(Depth, WaterLevel, MaxDepth, WaterColor, LandColor, LightnessMin, LightnessMax);
+	// float Edge = smoothstep(0.0, HexRadius * 0.08, -Sdf);
+	// Color *= lerp(0.25, 1.0, Edge);
 	return float4(Color, 1.0);
 }

@@ -19,10 +19,8 @@
 namespace HexCellViz
 {
 	static TWeakObjectPtr<UMaterial> GDefaultMaterial;
-
-	// ai generated
 	static const TCHAR* CustomCode = TEXT(
-		"float4 Result = HexCellViz_Shade(WorldPos, HexCells, HexCellsSampler, HexRadius, HexRotation, HexWaterLevel, HexMaxDepth, HexWaterColor.rgb, HexLandColor.rgb, HexMapWidth, HexMapHeight, HexOrigin);\n"
+		"float4 Result = HexCellViz_Shade(WorldPos, HexCells, HexCellsSampler, HexRadius, HexRotation, HexWaterLevel, HexMaxDepth, HexWaterColor.rgb, HexLandColor.rgb, HexLightnessMin, HexLightnessMax, HexMapWidth, HexMapHeight, HexOrigin);\n"
 		"Mask = Result.a;\n"
 		"return Result.rgb;\n"
 	);
@@ -32,14 +30,8 @@ UHexCellShaderVisualizer::UHexCellShaderVisualizer()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
-
-// ai generated
 void UHexCellShaderVisualizer::SetCells(const TArray<FHexCellInfo>& Cells)
 {
-	float MaxDepth = 1.f;
-	for (const FHexCellInfo& Cell : Cells)
-		MaxDepth = FMath::Max(MaxDepth, static_cast<float>(Cell.DepthLevel));
-
 	UploadCells(Cells);
 	EnsureMaterial();
 	EnsureDisplayMesh(Cells);
@@ -50,9 +42,11 @@ void UHexCellShaderVisualizer::SetCells(const TArray<FHexCellInfo>& Cells)
 		MaterialInstance->SetScalarParameterValue(HexRadiusParam, HexRadius);
 		MaterialInstance->SetScalarParameterValue(HexRotationParam, HexRotation);
 		MaterialInstance->SetScalarParameterValue(HexWaterLevelParam, static_cast<float>(WaterLevel));
-		MaterialInstance->SetScalarParameterValue(HexMaxDepthParam, MaxDepth);
+		MaterialInstance->SetScalarParameterValue(HexMaxDepthParam, static_cast<float>(FMath::Max(1, DepthLevelCount)));
 		MaterialInstance->SetVectorParameterValue(HexWaterColorParam, WaterColor);
 		MaterialInstance->SetVectorParameterValue(HexLandColorParam, LandColor);
+		MaterialInstance->SetScalarParameterValue(HexLightnessMinParam, LightnessMin);
+		MaterialInstance->SetScalarParameterValue(HexLightnessMaxParam, LightnessMax);
 		MaterialInstance->SetScalarParameterValue(HexMapWidthParam, static_cast<float>(MapWidth));
 		MaterialInstance->SetScalarParameterValue(HexMapHeightParam, static_cast<float>(MapHeight));
 		MaterialInstance->SetVectorParameterValue(HexOriginParam, FLinearColor(Origin.X, Origin.Y, Origin.Z, 0.f));
@@ -60,8 +54,6 @@ void UHexCellShaderVisualizer::SetCells(const TArray<FHexCellInfo>& Cells)
 	if (DisplayMesh && MaterialInstance)
 		DisplayMesh->SetMaterial(0, MaterialInstance);
 }
-
-// ai generated
 void UHexCellShaderVisualizer::Clear()
 {
 	if (DisplayMesh)
@@ -72,8 +64,6 @@ void UHexCellShaderVisualizer::Clear()
 	CellsTexture = nullptr;
 	MaterialInstance = nullptr;
 }
-
-// ai generated
 void UHexCellShaderVisualizer::EnsureMaterial()
 {
 	if (!Material)
@@ -82,15 +72,13 @@ void UHexCellShaderVisualizer::EnsureMaterial()
 	if (!MaterialInstance || MaterialInstance->Parent != Material)
 		MaterialInstance = UMaterialInstanceDynamic::Create(Material, this);
 }
-
-// ai generated
 UMaterialInterface* UHexCellShaderVisualizer::GetOrCreateDefaultMaterial()
 {
 #if WITH_EDITOR
 	if (UMaterial* Existing = HexCellViz::GDefaultMaterial.Get())
 		return Existing;
 
-	UMaterial* Mat = NewObject<UMaterial>(GetTransientPackage(), TEXT("M_HexCellVisualizer_v4"), RF_Transient | RF_Public);
+	UMaterial* Mat = NewObject<UMaterial>(GetTransientPackage(), TEXT("M_HexCellVisualizer_v5"), RF_Transient | RF_Public);
 	Mat->MaterialDomain = MD_Surface;
 	Mat->BlendMode = BLEND_Masked;
 	Mat->TwoSided = true;
@@ -125,15 +113,17 @@ UMaterialInterface* UHexCellShaderVisualizer::GetOrCreateDefaultMaterial()
 
 	UMaterialExpressionVectorParameter* WaterColorParam = MakeColor(TEXT("HexWaterColor"), FLinearColor(0.05f, 0.15f, 0.45f), 240);
 	UMaterialExpressionVectorParameter* LandColorParam = MakeColor(TEXT("HexLandColor"), FLinearColor(0.15f, 0.65f, 0.35f), 320);
-	UMaterialExpressionScalarParameter* MapWParam = MakeScalar(TEXT("HexMapWidth"), 1.f, 400);
-	UMaterialExpressionScalarParameter* MapHParam = MakeScalar(TEXT("HexMapHeight"), 1.f, 480);
+	UMaterialExpressionScalarParameter* LightnessMinParam = MakeScalar(TEXT("HexLightnessMin"), 0.35f, 360);
+	UMaterialExpressionScalarParameter* LightnessMaxParam = MakeScalar(TEXT("HexLightnessMax"), 1.0f, 400);
+	UMaterialExpressionScalarParameter* MapWParam = MakeScalar(TEXT("HexMapWidth"), 1.f, 440);
+	UMaterialExpressionScalarParameter* MapHParam = MakeScalar(TEXT("HexMapHeight"), 1.f, 520);
 
 	auto* OriginParam = Cast<UMaterialExpressionVectorParameter>(
-		UMaterialEditingLibrary::CreateMaterialExpression(Mat, UMaterialExpressionVectorParameter::StaticClass(), -600, 560));
+		UMaterialEditingLibrary::CreateMaterialExpression(Mat, UMaterialExpressionVectorParameter::StaticClass(), -600, 600));
 	OriginParam->ParameterName = TEXT("HexOrigin");
 
 	auto* WorldPos = Cast<UMaterialExpressionWorldPosition>(
-		UMaterialEditingLibrary::CreateMaterialExpression(Mat, UMaterialExpressionWorldPosition::StaticClass(), -600, 640));
+		UMaterialEditingLibrary::CreateMaterialExpression(Mat, UMaterialExpressionWorldPosition::StaticClass(), -600, 680));
 
 	auto* Custom = Cast<UMaterialExpressionCustom>(
 		UMaterialEditingLibrary::CreateMaterialExpression(Mat, UMaterialExpressionCustom::StaticClass(), -200, 0));
@@ -162,6 +152,8 @@ UMaterialInterface* UHexCellShaderVisualizer::GetOrCreateDefaultMaterial()
 	AddInput(TEXT("HexMaxDepth"));
 	AddInput(TEXT("HexWaterColor"));
 	AddInput(TEXT("HexLandColor"));
+	AddInput(TEXT("HexLightnessMin"));
+	AddInput(TEXT("HexLightnessMax"));
 	AddInput(TEXT("HexMapWidth"));
 	AddInput(TEXT("HexMapHeight"));
 	AddInput(TEXT("HexOrigin"));
@@ -174,6 +166,8 @@ UMaterialInterface* UHexCellShaderVisualizer::GetOrCreateDefaultMaterial()
 	UMaterialEditingLibrary::ConnectMaterialExpressions(MaxDepthParam, FString(), Custom, TEXT("HexMaxDepth"));
 	UMaterialEditingLibrary::ConnectMaterialExpressions(WaterColorParam, FString(), Custom, TEXT("HexWaterColor"));
 	UMaterialEditingLibrary::ConnectMaterialExpressions(LandColorParam, FString(), Custom, TEXT("HexLandColor"));
+	UMaterialEditingLibrary::ConnectMaterialExpressions(LightnessMinParam, FString(), Custom, TEXT("HexLightnessMin"));
+	UMaterialEditingLibrary::ConnectMaterialExpressions(LightnessMaxParam, FString(), Custom, TEXT("HexLightnessMax"));
 	UMaterialEditingLibrary::ConnectMaterialExpressions(MapWParam, FString(), Custom, TEXT("HexMapWidth"));
 	UMaterialEditingLibrary::ConnectMaterialExpressions(MapHParam, FString(), Custom, TEXT("HexMapHeight"));
 	UMaterialEditingLibrary::ConnectMaterialExpressions(OriginParam, FString(), Custom, TEXT("HexOrigin"));
@@ -188,8 +182,6 @@ UMaterialInterface* UHexCellShaderVisualizer::GetOrCreateDefaultMaterial()
 	return nullptr;
 #endif
 }
-
-// ai generated
 void UHexCellShaderVisualizer::EnsureDisplayMesh(const TArray<FHexCellInfo>& Cells)
 {
 	AActor* Owner = GetOwner();
@@ -231,8 +223,6 @@ void UHexCellShaderVisualizer::EnsureDisplayMesh(const TArray<FHexCellInfo>& Cel
 	DisplayMesh->SetWorldLocation(FVector(Center.X, Center.Y, Origin.Z + 1.f));
 	DisplayMesh->SetWorldScale3D(FVector(FMath::Max(1.f, Extents.X * 0.01f), FMath::Max(1.f, Extents.Y * 0.01f), 1.f));
 }
-
-// ai generated
 void UHexCellShaderVisualizer::UploadCells(const TArray<FHexCellInfo>& Cells)
 {
 	const int32 Width = FMath::Max(1, MapWidth);

@@ -1,4 +1,4 @@
-// Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
+// Copyright (c) 2026 Pinaev Danil (DaniElRuso). MIT License.
 // Material Custom:
 //   float4 Result = HexCellViz_Shade(WorldPos, HexCells, HexCellsSampler, HexRadius, HexRotation, HexWaterLevel, HexMaxDepth, HexWaterColor.rgb, HexLandColor.rgb, HexLightnessMin, HexLightnessMax, HexMapWidth, HexMapHeight, HexOrigin);
 //   Mask = Result.a;

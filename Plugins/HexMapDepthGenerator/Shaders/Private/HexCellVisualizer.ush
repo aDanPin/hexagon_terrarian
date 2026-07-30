@@ -1,4 +1,4 @@
-// Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
+// Copyright (c) 2026 Pinaev Danil (DaniElRuso). MIT License.
 // Hex cell depth visualization for UHexCellShaderVisualizer
 // Texture HexCells: MapWidth x MapHeight, .w = depth
 // Local: Lx=Wy-Origin.y (Px), Lz=-(Wx-Origin.x) (Pz)

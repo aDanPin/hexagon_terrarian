@@ -1,4 +1,4 @@
-// Copyright Pinaev Danil (DaniElRuso) 2026. All Rights Reserved.
+// Copyright (c) 2026 Pinaev Danil (DaniElRuso). MIT License.
 
 #include "HexMapTransforms.h"
 FIntPoint FHexMapTransforms::AlphaBettaToXY(int32 Alpha, int32 Beta)

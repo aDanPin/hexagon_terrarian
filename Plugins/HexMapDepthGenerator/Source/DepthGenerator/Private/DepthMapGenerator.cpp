@@ -52,15 +52,13 @@ TArray<int32> FDepthMapGenerator::GetQuantizeMap()
 		for (const FDepthLevelConfig& Level : GenerationLevels) {
 			if (Level.bEnabled) ApplyNoiseLevel(Level, i, Src);
 		}
-	}
 
-	for(int i = 0; i < Height; i++) {
-		float* RESTRICT Src = Map.GetData() + i * W;
+		const float*  Source = Map.GetData() + i * W;
 		int* RESTRICT Dst = Quantized.GetData() + i * W;
 	
-		for (int32 j = 0; j < Width; Src++, Dst++, j++)
+		for (int32 j = 0; j < Width; Source++, Dst++, j++)
 		{
-			*Dst = QuantizeDepth(*Src, Levels);
+			*Dst = QuantizeDepth(*Source, Levels);
 		}
 	}
 
@@ -82,19 +80,15 @@ TArray<int32> FDepthMapGenerator::GetQuantizeMapParallel()
 
 	ParallelFor(Height, [&, W](int32 index) {
 		float* RESTRICT Src = Map.GetData() + index * W;
-		
 		for (const FDepthLevelConfig& Level : GenerationLevels) {
 			if (Level.bEnabled) ApplyNoiseLevel(Level, index, Src);
 		}
-	});
 
-	ParallelFor(Height, [&, W, Levels](int32 index) {
-		float* RESTRICT Src = Map.GetData() + index * W;
+		const float*  Source = Map.GetData() + index * W;
 		int* RESTRICT Dst = Quantized.GetData() + index * W;
-
-		for (int32 i = 0; i < Width; Src++, Dst++, i++)
+		for (int32 i = 0; i < Width; Source++, Dst++, i++)
 		{
-			*Dst = QuantizeDepth(*Src, Levels);
+			*Dst = QuantizeDepth(*Source, Levels);
 		}
 	});
 

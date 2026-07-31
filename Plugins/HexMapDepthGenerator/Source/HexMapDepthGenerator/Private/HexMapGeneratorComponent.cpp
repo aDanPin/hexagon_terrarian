@@ -4,6 +4,8 @@
 #include "HexMapTransforms.h"
 #include "HexCellShaderVisualizer.h"
 #include "GameFramework/Actor.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/LineBatchComponent.h"
 #include "DrawDebugHelpers.h"
@@ -141,14 +143,9 @@ void UHexMapGeneratorComponent::DrawDebugGrid(AActor* Anchor, const TArray<int32
 	UWorld* World = GetWorld();
 	if (!World || !Anchor || !Visualization.bDrawDebugGrid) return;
 
-	ULineBatchComponent* LineBatch = NewObject<ULineBatchComponent>(
-		Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
+	ULineBatchComponent* LineBatch = NewObject<ULineBatchComponent>(Anchor, NAME_None, RF_Transient);
 	LineBatch->SetupAttachment(Anchor->GetRootComponent());
 	LineBatch->RegisterComponent();
-	Anchor->AddInstanceComponent(LineBatch);
-#if WITH_EDITOR
-	LineBatch->Modify();
-#endif
 
 	const float R = FieldMetadata.HexRadius;
 	const float RotRad = FMath::DegreesToRadians(FieldMetadata.HexRotation + 30.f);
@@ -199,10 +196,6 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<int32>& Dep
 {
 	if (!GetWorld() || !Anchor || DepthMeshes.Num() == 0) return;
 
-#if WITH_EDITOR
-	Anchor->Modify();
-#endif
-
 	ClearShaderVisualizer(Anchor);
 	ClearHISM(Anchor);
 	ClearDebugGrid(Anchor);
@@ -216,14 +209,10 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<int32>& Dep
 	{
 		if (!DepthMeshes[i]) continue;
 		UHierarchicalInstancedStaticMeshComponent* HISM = NewObject<UHierarchicalInstancedStaticMeshComponent>(
-			Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
+			Anchor, NAME_None, RF_Transient);
 		HISM->SetStaticMesh(DepthMeshes[i]);
 		HISM->SetupAttachment(Anchor->GetRootComponent());
 		HISM->RegisterComponent();
-		Anchor->AddInstanceComponent(HISM);
-#if WITH_EDITOR
-		HISM->Modify();
-#endif
 		Components[i] = HISM;
 	}
 
@@ -250,25 +239,16 @@ void UHexMapGeneratorComponent::InitMap(AActor* Anchor, const TArray<int32>& Dep
 
 	if (Visualization.bDrawDebugGrid)
 		DrawDebugGrid(Anchor, DepthMap);
-
-#if WITH_EDITOR
-	Anchor->MarkPackageDirty();
-#endif
 }
 void UHexMapGeneratorComponent::InitMapShader(AActor* Anchor, const TArray<int32>& DepthMap)
 {
 	if (!GetWorld() || !Anchor) return;
 
-#if WITH_EDITOR
-	Anchor->Modify();
-#endif
-
 	ClearHISM(Anchor);
 	ClearShaderVisualizer(Anchor);
 	ClearDebugGrid(Anchor);
 
-	UHexCellShaderVisualizer* Viz = NewObject<UHexCellShaderVisualizer>(
-		Anchor, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
+	UHexCellShaderVisualizer* Viz = NewObject<UHexCellShaderVisualizer>(Anchor, NAME_None, RF_Transient);
 	Viz->Material = Visualization.ShaderMaterial;
 	Viz->HexRadius = FieldMetadata.HexRadius;
 	Viz->HexRotation = FieldMetadata.HexRotation;
@@ -282,18 +262,10 @@ void UHexMapGeneratorComponent::InitMapShader(AActor* Anchor, const TArray<int32
 	Viz->MapHeight = FieldMetadata.MapHeight;
 	Viz->Origin = Anchor->GetActorLocation();
 	Viz->RegisterComponent();
-	Anchor->AddInstanceComponent(Viz);
-#if WITH_EDITOR
-	Viz->Modify();
-#endif
 	Viz->SetCells(GetHexCells());
 
 	if (Visualization.bDrawDebugGrid)
 		DrawDebugGrid(Anchor, DepthMap);
-
-#if WITH_EDITOR
-	Anchor->MarkPackageDirty();
-#endif
 }
 TArray<FHexCellInfo> UHexMapGeneratorComponent::GetHexCells() const
 {
@@ -355,6 +327,19 @@ void UHexMapGeneratorComponent::LoadPreset()
 }
 
 #if WITH_EDITOR
+// ai generated
+void UHexMapGeneratorComponent::OnRegister()
+{
+	Super::OnRegister();
+
+	UWorld* World = GetWorld();
+	if (!World || World->IsGameWorld()) return;
+
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		Regenerate();
+	}));
+}
 void UHexMapGeneratorComponent::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeChainProperty(PropertyChangedEvent);

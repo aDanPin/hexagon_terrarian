@@ -66,10 +66,10 @@ void UHexCellShaderVisualizer::Clear()
 }
 void UHexCellShaderVisualizer::EnsureMaterial()
 {
-	if (!Material)
+	if (!IsValid(Material))
 		Material = GetOrCreateDefaultMaterial();
 	if (!Material) return;
-	if (!MaterialInstance || MaterialInstance->Parent != Material)
+	if (!IsValid(MaterialInstance) || MaterialInstance->Parent != Material)
 		MaterialInstance = UMaterialInstanceDynamic::Create(Material, this);
 }
 UMaterialInterface* UHexCellShaderVisualizer::GetOrCreateDefaultMaterial()
@@ -78,7 +78,11 @@ UMaterialInterface* UHexCellShaderVisualizer::GetOrCreateDefaultMaterial()
 	if (UMaterial* Existing = HexCellViz::GDefaultMaterial.Get())
 		return Existing;
 
-	UMaterial* Mat = NewObject<UMaterial>(GetTransientPackage(), TEXT("M_HexCellVisualizer_v5"), RF_Transient | RF_Public);
+	UMaterial* Mat = NewObject<UMaterial>(
+		GetTransientPackage(),
+		MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_HexCellVisualizer")),
+		RF_Transient | RF_Public);
+	Mat->AddToRoot();
 	Mat->MaterialDomain = MD_Surface;
 	Mat->BlendMode = BLEND_Masked;
 	Mat->TwoSided = true;
@@ -189,12 +193,11 @@ void UHexCellShaderVisualizer::EnsureDisplayMesh(const TArray<FHexCellInfo>& Cel
 
 	if (!DisplayMesh)
 	{
-		DisplayMesh = NewObject<UStaticMeshComponent>(Owner, NAME_None, WITH_EDITOR ? RF_Transactional : RF_NoFlags);
+		DisplayMesh = NewObject<UStaticMeshComponent>(Owner, NAME_None, RF_Transient);
 		if (UStaticMesh* PlaneMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Plane.Plane")))
 			DisplayMesh->SetStaticMesh(PlaneMesh);
 		DisplayMesh->SetupAttachment(Owner->GetRootComponent());
 		DisplayMesh->RegisterComponent();
-		Owner->AddInstanceComponent(DisplayMesh);
 	}
 
 	FVector2D Min(FLT_MAX, FLT_MAX), Max(-FLT_MAX, -FLT_MAX);
@@ -228,7 +231,7 @@ void UHexCellShaderVisualizer::UploadCells(const TArray<FHexCellInfo>& Cells)
 	const int32 Width = FMath::Max(1, MapWidth);
 	const int32 Height = FMath::Max(1, MapHeight);
 
-	if (!CellsTexture || CellsTexture->GetSizeX() != Width || CellsTexture->GetSizeY() != Height)
+	if (!IsValid(CellsTexture) || CellsTexture->GetSizeX() != Width || CellsTexture->GetSizeY() != Height)
 	{
 		CellsTexture = UTexture2D::CreateTransient(Width, Height, PF_A32B32G32R32F);
 		CellsTexture->Filter = TF_Nearest;

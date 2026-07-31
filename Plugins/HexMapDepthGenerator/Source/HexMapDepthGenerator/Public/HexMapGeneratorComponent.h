@@ -56,6 +56,7 @@ public:
 	TArray<FHexCellInfo> GetHexCells() const;
 
 #if WITH_EDITOR
+	virtual void OnRegister() override;
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	bool bSuppressPropertyRegen = false;
 #endif

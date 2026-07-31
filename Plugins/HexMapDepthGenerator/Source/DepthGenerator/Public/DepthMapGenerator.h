@@ -22,10 +22,10 @@ private:
 
 	void PrepareMap();
 	inline float Apply(const FDepthLevelConfig& Level, float LeftValue, float RightValue);
-	void ApplyNoiseLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
-	void ApplyPerlinLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
-	void ApplyEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
-	void ApplyValueLayer(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
-	void ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map, int32* RESTRICT Quantized);
+	void ApplyNoiseLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map);
+	void ApplyPerlinLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map);
+	void ApplyEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map);
+	void ApplyValueLayer(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map);
+	void ApplyPerlinEuclideanLevel(const FDepthLevelConfig& Level, int32 Row, float* RESTRICT Map);
 	static void ShiftsFromSeed(int32 Seed, float& OutX, float& OutY);
 };
